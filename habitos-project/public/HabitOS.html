@@ -1,0 +1,2195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HabitOS — Habit Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg0:#0d0f12;--bg1:#121214;--bg2:#1a1c21;--bg3:#22252c;
+  --cyan:#00f5d4;--purple:#9d4edd;--pink:#ff007f;--amber:#f5a623;
+  --cyan-dim:rgba(0,245,212,0.12);--purple-dim:rgba(157,78,221,0.12);--pink-dim:rgba(255,0,127,0.12);
+  --text1:#f0f2f5;--text2:#8b92a5;--text3:#4a5060;
+  --glass:rgba(255,255,255,0.04);--glass-border:rgba(255,255,255,0.08);
+  --radius:14px;--radius-sm:8px;
+}
+body{font-family:'Outfit',sans-serif;background:var(--bg0);color:var(--text1);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;top:-40%;left:-20%;width:60vw;height:60vw;background:radial-gradient(circle,rgba(157,78,221,0.06) 0%,transparent 65%);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;bottom:-30%;right:-10%;width:50vw;height:50vw;background:radial-gradient(circle,rgba(0,245,212,0.05) 0%,transparent 65%);pointer-events:none;z-index:0}
+
+.app{position:relative;z-index:1;display:grid;grid-template-columns:220px 1fr;min-height:100vh;max-width:1200px;margin:0 auto}
+
+.sidebar{background:linear-gradient(180deg,rgba(18,18,20,0.9),rgba(13,15,18,0.95));border-right:1px solid var(--glass-border);padding:24px 16px;display:flex;flex-direction:column;gap:4px;backdrop-filter:blur(20px);position:sticky;top:0;height:100vh}
+.logo{display:flex;align-items:center;gap:10px;padding:0 8px 24px;border-bottom:1px solid var(--glass-border);margin-bottom:8px}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--purple),var(--cyan));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 16px rgba(157,78,221,0.4)}
+.logo-text{font-size:16px;font-weight:700;background:linear-gradient(135deg,var(--cyan),var(--purple));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.logo-sub{font-size:11px;color:var(--text3);margin-top:-2px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-sm);cursor:pointer;font-size:14px;color:var(--text2);transition:all 0.2s;border:1px solid transparent;user-select:none}
+.nav-item:hover{background:var(--glass);color:var(--text1)}
+.nav-item.active{background:var(--cyan-dim);color:var(--cyan);border-color:rgba(0,245,212,0.2)}
+.nav-icon{font-size:17px;width:20px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--purple-dim);color:var(--purple);font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid rgba(157,78,221,0.2)}
+.sidebar-section{font-size:10px;color:var(--text3);padding:16px 12px 6px;text-transform:uppercase;letter-spacing:1.2px;font-weight:600}
+.sidebar-footer{margin-top:auto;padding-top:16px;border-top:1px solid var(--glass-border)}
+.xp-bar-label{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:6px}
+.xp-bar-bg{height:4px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.xp-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--purple),var(--cyan));transition:width 0.5s}
+.level-badge{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text1);font-weight:600;margin-bottom:8px}
+.level-badge span{background:linear-gradient(135deg,var(--purple),var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+
+.main{overflow-y:auto;max-height:100vh;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
+.main::-webkit-scrollbar{width:4px}
+.main::-webkit-scrollbar-track{background:transparent}
+.main::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:4px}
+
+.page{display:none;padding:28px 28px 60px;animation:fadein 0.3s ease}
+.page.active{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.page-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:28px}
+.page-title{font-size:22px;font-weight:700}
+.page-sub{font-size:13px;color:var(--text2);margin-top:2px}
+.page-date{font-size:13px;color:var(--text3);text-align:right}
+
+.glass-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:20px;backdrop-filter:blur(10px);transition:all 0.2s}
+.glass-card:hover{border-color:rgba(255,255,255,0.12)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+
+.stat-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:16px 18px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;opacity:0.12;filter:blur(20px)}
+.stat-card.cyan::before{background:var(--cyan)}
+.stat-card.purple::before{background:var(--purple)}
+.stat-card.pink::before{background:var(--pink)}
+.stat-card.amber::before{background:var(--amber)}
+.stat-card .label{font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;font-weight:600;margin-bottom:8px}
+.stat-card .value{font-size:28px;font-weight:700;line-height:1}
+.stat-card .sub{font-size:12px;color:var(--text2);margin-top:4px}
+.stat-card.cyan .value{color:var(--cyan)}
+.stat-card.purple .value{color:var(--purple)}
+.stat-card.pink .value{color:var(--pink)}
+.stat-card.amber .value{color:var(--amber)}
+
+.ring-container{display:flex;align-items:center;gap:20px;margin-bottom:20px}
+.ring-wrap{position:relative;width:80px;height:80px;flex-shrink:0}
+.ring-wrap svg{transform:rotate(-90deg)}
+.ring-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:var(--cyan)}
+.ring-info .title{font-size:16px;font-weight:600;margin-bottom:4px}
+.ring-info .sub{font-size:13px;color:var(--text2)}
+
+.habit-item{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);margin-bottom:10px;cursor:pointer;transition:all 0.25s;user-select:none}
+.habit-item:hover{background:rgba(255,255,255,0.06);transform:translateX(2px)}
+.habit-item.done{border-color:rgba(0,245,212,0.25);background:rgba(0,245,212,0.04)}
+.habit-check{width:28px;height:28px;border-radius:8px;border:2px solid var(--glass-border);display:flex;align-items:center;justify-content:center;font-size:14px;transition:all 0.25s;flex-shrink:0;background:var(--bg2)}
+.habit-item.done .habit-check{background:var(--cyan-dim);border-color:rgba(0,245,212,0.5);color:var(--cyan);box-shadow:0 0 10px rgba(0,245,212,0.2)}
+.habit-emoji{font-size:20px;width:32px;text-align:center}
+.habit-info{flex:1;min-width:0}
+.habit-name{font-size:14px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.habit-item.done .habit-name{text-decoration:line-through;color:var(--text2)}
+.habit-cat{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px}
+.habit-streak{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--amber);flex-shrink:0}
+.habit-actions{display:flex;gap:6px;opacity:0;transition:opacity 0.2s}
+.habit-item:hover .habit-actions{opacity:1}
+.habit-btn{background:none;border:1px solid var(--glass-border);border-radius:6px;padding:4px 8px;font-size:12px;color:var(--text2);cursor:pointer;transition:all 0.2s}
+.habit-btn:hover{background:var(--glass);color:var(--text1)}
+.habit-btn.del:hover{border-color:rgba(255,0,127,0.4);color:var(--pink)}
+
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.cal-nav{display:flex;align-items:center;gap:12px}
+.cal-btn{background:var(--glass);border:1px solid var(--glass-border);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text1);font-size:16px;transition:all 0.2s}
+.cal-btn:hover{background:var(--cyan-dim);border-color:rgba(0,245,212,0.3);color:var(--cyan)}
+.cal-title{font-size:15px;font-weight:600;min-width:140px;text-align:center}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-day-name{text-align:center;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;padding:6px 0;font-weight:600}
+.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:13px;cursor:pointer;transition:all 0.2s;color:var(--text2);position:relative}
+.cal-day:hover{background:var(--glass);color:var(--text1)}
+.cal-day.today{background:var(--purple-dim);color:var(--purple);font-weight:700;border:1px solid rgba(157,78,221,0.3)}
+.cal-day.done{background:var(--cyan-dim);color:var(--cyan);font-weight:600}
+.cal-day.done::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--cyan)}
+.cal-day.other-month{opacity:0.3}
+.cal-day.selected{box-shadow:0 0 0 2px var(--cyan);color:var(--text1);background:var(--glass)}
+
+.heatmap-grid{display:grid;grid-template-columns:repeat(52,1fr);gap:3px;margin-top:8px}
+.hm-cell{aspect-ratio:1;border-radius:2px;background:var(--bg3);transition:all 0.15s;cursor:pointer}
+.hm-cell:hover{transform:scale(1.3)}
+.hm-0{background:var(--bg3)}
+.hm-1{background:rgba(0,245,212,0.2)}
+.hm-2{background:rgba(0,245,212,0.4)}
+.hm-3{background:rgba(0,245,212,0.65)}
+.hm-4{background:var(--cyan);box-shadow:0 0 4px rgba(0,245,212,0.5)}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);z-index:100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.3s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid var(--glass-border);border-radius:20px;padding:28px;width:100%;max-width:460px;transform:translateY(20px) scale(0.97);transition:all 0.3s;box-shadow:0 24px 80px rgba(0,0,0,0.6)}
+.modal-overlay.open .modal{transform:translateY(0) scale(1)}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:20px}
+.form-group{margin-bottom:16px}
+.form-label{font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;font-weight:600;margin-bottom:6px;display:block}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--glass-border);border-radius:10px;padding:10px 14px;font-size:14px;font-family:'Outfit',sans-serif;color:var(--text1);outline:none;transition:border-color 0.2s}
+.form-input:focus{border-color:rgba(0,245,212,0.4);box-shadow:0 0 0 3px rgba(0,245,212,0.06)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.color-pick{display:flex;gap:8px;flex-wrap:wrap}
+.color-dot{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all 0.2s}
+.color-dot.sel{border-color:white;transform:scale(1.15)}
+.emoji-pick{display:flex;gap:6px;flex-wrap:wrap}
+.emoji-opt{background:var(--bg3);border:1px solid var(--glass-border);border-radius:8px;padding:6px 10px;font-size:18px;cursor:pointer;transition:all 0.2s}
+.emoji-opt.sel,.emoji-opt:hover{background:var(--cyan-dim);border-color:rgba(0,245,212,0.3)}
+.btn-row{display:flex;gap:10px;margin-top:20px}
+.btn{padding:10px 20px;border-radius:10px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;border:1px solid transparent}
+.btn-primary{background:linear-gradient(135deg,rgba(0,245,212,0.2),rgba(157,78,221,0.2));border-color:rgba(0,245,212,0.3);color:var(--cyan)}
+.btn-primary:hover{background:linear-gradient(135deg,rgba(0,245,212,0.3),rgba(157,78,221,0.3));box-shadow:0 0 20px rgba(0,245,212,0.15)}
+.btn-ghost{background:transparent;border-color:var(--glass-border);color:var(--text2)}
+.btn-ghost:hover{background:var(--glass);color:var(--text1)}
+
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--bg2);border:1px solid var(--glass-border);border-radius:12px;padding:12px 18px;font-size:14px;color:var(--text1);box-shadow:0 8px 32px rgba(0,0,0,0.5);animation:slideup 0.3s ease,fadeout 0.3s ease 2.7s forwards;display:flex;align-items:center;gap:10px;max-width:320px}
+.toast.cyan{border-left:3px solid var(--cyan)}
+.toast.purple{border-left:3px solid var(--purple)}
+.toast.pink{border-left:3px solid var(--pink)}
+.toast.amber{border-left:3px solid var(--amber)}
+@keyframes slideup{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeout{from{opacity:1}to{opacity:0;transform:translateY(-8px)}}
+
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:80px;margin-top:12px}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bar{width:100%;border-radius:4px 4px 0 0;min-height:4px;transition:height 0.5s ease;position:relative}
+.bar.filled{background:linear-gradient(180deg,var(--cyan),rgba(0,245,212,0.4));box-shadow:0 0 8px rgba(0,245,212,0.2)}
+.bar.empty{background:var(--bg3)}
+.bar-label{font-size:10px;color:var(--text3)}
+
+.mood-row{display:flex;gap:8px;margin-bottom:12px}
+.mood-btn{flex:1;padding:10px 6px;border-radius:10px;border:1px solid var(--glass-border);background:var(--bg3);cursor:pointer;font-size:20px;text-align:center;transition:all 0.2s}
+.mood-btn.sel,.mood-btn:hover{background:var(--glass);border-color:rgba(255,255,255,0.2);transform:scale(1.06)}
+.energy-wrap{display:flex;gap:6px;margin-bottom:12px}
+.energy-dot{width:20px;height:20px;border-radius:4px;background:var(--bg3);cursor:pointer;transition:all 0.2s;border:1px solid transparent}
+.energy-dot.lit{background:var(--amber);box-shadow:0 0 8px rgba(245,166,35,0.4)}
+
+.search-bar{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--glass-border);border-radius:12px;padding:10px 16px;margin-bottom:20px}
+.search-bar input{flex:1;background:none;border:none;outline:none;font-family:'Outfit',sans-serif;font-size:14px;color:var(--text1)}
+.search-bar input::placeholder{color:var(--text3)}
+.search-icon{color:var(--text3);font-size:16px}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.filter-chip{padding:5px 14px;border-radius:20px;border:1px solid var(--glass-border);font-size:12px;color:var(--text2);cursor:pointer;transition:all 0.2s;background:var(--glass)}
+.filter-chip:hover,.filter-chip.active{background:var(--cyan-dim);border-color:rgba(0,245,212,0.3);color:var(--cyan)}
+
+.achievement{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);margin-bottom:10px}
+.ach-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.ach-icon.gold{background:rgba(245,166,35,0.15);box-shadow:0 0 12px rgba(245,166,35,0.2)}
+.ach-icon.cyan{background:var(--cyan-dim);box-shadow:0 0 12px rgba(0,245,212,0.15)}
+.ach-icon.purple{background:var(--purple-dim);box-shadow:0 0 12px rgba(157,78,221,0.15)}
+.ach-icon.locked{background:var(--bg3);filter:grayscale(1)}
+.ach-info{flex:1}
+.ach-title{font-size:14px;font-weight:600;margin-bottom:2px}
+.ach-sub{font-size:12px;color:var(--text2)}
+.ach-xp{font-size:12px;font-weight:700;color:var(--amber)}
+
+.insight{background:linear-gradient(135deg,rgba(157,78,221,0.12),rgba(0,245,212,0.08));border:1px solid rgba(157,78,221,0.2);border-radius:var(--radius);padding:16px 20px;display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.insight-icon{font-size:24px}
+.insight-text{font-size:13px;color:var(--text1);line-height:1.5}
+.insight-text strong{color:var(--cyan)}
+
+.empty{text-align:center;padding:48px 20px}
+.empty-icon{font-size:48px;margin-bottom:16px;opacity:0.5}
+.empty-title{font-size:16px;font-weight:600;color:var(--text2);margin-bottom:8px}
+.empty-sub{font-size:13px;color:var(--text3);margin-bottom:20px}
+
+.section-title{font-size:13px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.section-title::after{content:'';flex:1;height:1px;background:var(--glass-border)}
+
+.theme-bar{display:flex;gap:8px;flex-wrap:wrap}
+.theme-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--glass-border);font-size:12px;color:var(--text2);cursor:pointer;transition:all 0.2s;background:var(--glass)}
+.theme-btn.active{background:var(--purple-dim);border-color:rgba(157,78,221,0.4);color:var(--purple)}
+
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(18,18,20,0.95);backdrop-filter:blur(20px);border-top:1px solid var(--glass-border);padding:8px 0;z-index:50}
+.mobile-nav-items{display:flex;justify-content:space-around}
+.mobile-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 16px;cursor:pointer;font-size:20px;color:var(--text3);transition:all 0.2s;border-radius:8px}
+.mobile-nav-item.active{color:var(--cyan)}
+.mobile-nav-label{font-size:10px;font-weight:600}
+
+@media(max-width:768px){
+  .app{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .mobile-nav{display:flex}
+  .main{max-height:calc(100vh - 64px);padding-bottom:0}
+  .page{padding:20px 16px 80px}
+  .grid-4{grid-template-columns:repeat(2,1fr)}
+  .grid-3{grid-template-columns:1fr}
+  .grid-2{grid-template-columns:1fr}
+  .ring-container{flex-direction:column;align-items:flex-start}
+  .heatmap-grid{grid-template-columns:repeat(26,1fr)}
+  .form-row{grid-template-columns:1fr}
+}
+
+.separator{height:1px;background:var(--glass-border);margin:20px 0}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.tag.cyan{background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(0,245,212,0.2)}
+.tag.purple{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(157,78,221,0.2)}
+.tag.pink{background:var(--pink-dim);color:var(--pink);border:1px solid rgba(255,0,127,0.2)}
+.tag.amber{background:rgba(245,166,35,0.12);color:var(--amber);border:1px solid rgba(245,166,35,0.2)}
+.streak-fire{animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.7}}
+select{background:var(--bg3);border:1px solid var(--glass-border);border-radius:10px;padding:10px 14px;font-size:14px;font-family:'Outfit',sans-serif;color:var(--text1);outline:none;width:100%;-webkit-appearance:none;appearance:none}
+select:focus{border-color:rgba(0,245,212,0.4)}
+textarea{resize:vertical;min-height:80px}
+
+/* ═══════════════════════════════════════════════════════
+   MEJORAS DE DISEÑO v2.1
+   ═══════════════════════════════════════════════════════ */
+
+/* Tarjetas de hábito con elevación y borde izquierdo de color */
+.habit-item{
+  background:linear-gradient(145deg,var(--bg2),var(--bg1));
+  box-shadow:0 4px 20px rgba(0,0,0,0.25);
+}
+.habit-item:hover{
+  box-shadow:0 8px 32px rgba(0,0,0,0.35);
+  transform:translateX(3px) translateY(-1px);
+}
+.habit-item.done{
+  background:linear-gradient(145deg,rgba(0,245,212,0.06),var(--bg1));
+}
+
+/* Barra de acciones superior (botón + búsqueda en línea) */
+.actions-bar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:var(--bg2);
+  padding:12px 18px;
+  border-radius:12px;
+  margin-bottom:16px;
+  border:1px solid var(--glass-border);
+}
+
+/* Grid de hábitos en pantallas anchas */
+@media(min-width:900px){
+  #habits-list{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:0 12px;
+  }
+}
+@media(min-width:1100px){
+  #habits-list{
+    grid-template-columns:1fr 1fr 1fr;
+  }
+}
+
+/* Stat cards con micro animación al cargar */
+.stat-card{
+  transition:transform 0.2s ease, box-shadow 0.2s ease;
+  cursor:default;
+}
+.stat-card:hover{
+  transform:translateY(-3px);
+  box-shadow:0 12px 40px rgba(0,0,0,0.3);
+}
+
+/* Glass cards más profundas */
+.glass-card{
+  background:linear-gradient(145deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015));
+  box-shadow:0 4px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+/* Modal más pulido */
+.modal{
+  background:linear-gradient(145deg,var(--bg2),var(--bg1));
+  box-shadow:0 32px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06);
+}
+
+/* Inputs con foco mejorado */
+.form-input:focus{
+  border-color:rgba(0,245,212,0.5);
+  box-shadow:0 0 0 4px rgba(0,245,212,0.08), 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* Botón primario con glow */
+.btn-primary{
+  position:relative;
+  overflow:hidden;
+}
+.btn-primary::after{
+  content:'';
+  position:absolute;
+  inset:-1px;
+  border-radius:inherit;
+  background:linear-gradient(135deg,rgba(0,245,212,0.15),rgba(157,78,221,0.15));
+  opacity:0;
+  transition:opacity 0.2s;
+}
+.btn-primary:hover::after{opacity:1;}
+.btn-primary:active{transform:scale(0.97);}
+
+/* Achievement cards con elevación */
+.achievement{
+  transition:all 0.2s;
+}
+.achievement:hover{
+  transform:translateX(3px);
+  border-color:rgba(255,255,255,0.1);
+  background:rgba(255,255,255,0.06);
+}
+
+/* Filtros activos más visibles */
+.filter-chip.active{
+  box-shadow:0 0 12px rgba(0,245,212,0.2);
+  font-weight:600;
+}
+
+/* Nav items con indicador lateral */
+.nav-item.active{
+  position:relative;
+}
+.nav-item.active::before{
+  content:'';
+  position:absolute;
+  left:-8px;
+  top:50%;
+  transform:translateY(-50%);
+  width:3px;
+  height:60%;
+  background:var(--cyan);
+  border-radius:0 3px 3px 0;
+  box-shadow:0 0 8px var(--cyan);
+}
+
+/* Toasts más bonitos */
+.toast{
+  backdrop-filter:blur(12px);
+  font-weight:500;
+}
+
+/* Animación de entrada para stat-cards */
+@keyframes cardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.stat-card:nth-child(1){animation:cardIn 0.3s ease 0.05s both}
+.stat-card:nth-child(2){animation:cardIn 0.3s ease 0.10s both}
+.stat-card:nth-child(3){animation:cardIn 0.3s ease 0.15s both}
+.stat-card:nth-child(4){animation:cardIn 0.3s ease 0.20s both}
+
+/* Scrollbar en modal */
+.modal{max-height:90vh;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
+
+/* Badges de prioridad con colores diferenciados más claros */
+.tag.pink{text-shadow:0 0 8px rgba(255,0,127,0.4)}
+.tag.cyan{text-shadow:0 0 8px rgba(0,245,212,0.3)}
+.tag.amber{text-shadow:0 0 8px rgba(245,166,35,0.3)}
+
+
+/* ═══════════════════════════════════════════════════════
+   SOLO LEVELING — Sistema de rangos
+   ═══════════════════════════════════════════════════════ */
+.rank-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid;margin-bottom:6px}
+.rank-E{background:rgba(120,120,120,0.12);border-color:rgba(120,120,120,0.3);color:#aaa}
+.rank-D{background:rgba(100,180,100,0.12);border-color:rgba(100,180,100,0.3);color:#6bc46b}
+.rank-C{background:rgba(100,160,220,0.12);border-color:rgba(100,160,220,0.3);color:#64a0dc}
+.rank-B{background:rgba(180,100,220,0.12);border-color:rgba(180,100,220,0.3);color:#b464dc}
+.rank-A{background:rgba(245,166,35,0.15);border-color:rgba(245,166,35,0.4);color:var(--amber)}
+.rank-S{background:rgba(0,245,212,0.12);border-color:rgba(0,245,212,0.4);color:var(--cyan);text-shadow:0 0 10px rgba(0,245,212,0.6)}
+.rank-N{background:linear-gradient(135deg,rgba(0,245,212,0.15),rgba(157,78,221,0.15));border-color:rgba(255,255,255,0.3);color:#fff;text-shadow:0 0 12px rgba(255,255,255,0.5)}
+
+/* Penalización del sistema */
+@keyframes systemAlert{0%,100%{opacity:1}50%{opacity:0.6}20%{transform:scale(1.02)}80%{transform:scale(1)}}
+.system-penalty{animation:systemAlert 0.5s ease 3}
+
+/* ═══════════════════════════════════════════════════════
+   CRONÓMETRO
+   ═══════════════════════════════════════════════════════ */
+.btn-timer{
+  background:linear-gradient(135deg,rgba(157,78,221,0.2),rgba(0,245,212,0.1));
+  border:1px solid rgba(157,78,221,0.4);
+  color:var(--purple);
+  font-weight:600;
+  position:relative;
+  overflow:hidden;
+}
+.btn-timer:hover{
+  background:linear-gradient(135deg,rgba(157,78,221,0.35),rgba(0,245,212,0.2));
+  box-shadow:0 0 20px rgba(157,78,221,0.3);
+  color:var(--text1);
+}
+.timer-modal{max-width:400px}
+.timer-mode-btn{
+  flex:1;font-size:12px;padding:8px 10px;
+  background:var(--bg3);border-color:var(--glass-border);color:var(--text2);
+}
+.timer-mode-btn.active{
+  background:var(--purple-dim);border-color:rgba(157,78,221,0.4);color:var(--purple);
+}
+/* Pulso animado cuando el timer corre */
+@keyframes timerPulse{0%,100%{text-shadow:0 0 30px rgba(0,245,212,0.4)}50%{text-shadow:0 0 60px rgba(0,245,212,0.9),0 0 100px rgba(0,245,212,0.3)}}
+.timer-running{animation:timerPulse 1.5s ease infinite}
+/* Rojo cuando queda poco tiempo */
+.timer-urgent{color:var(--pink) !important;text-shadow:0 0 30px rgba(255,0,127,0.6) !important}
+@keyframes timerUrgent{0%,100%{text-shadow:0 0 30px rgba(255,0,127,0.4)}50%{text-shadow:0 0 60px rgba(255,0,127,0.9)}}
+.timer-urgent{animation:timerUrgent 0.8s ease infinite}
+
+/* ═══════════════════════════════════════════════════════
+   MOBILE-FIRST OVERRIDES REFORZADOS
+   ═══════════════════════════════════════════════════════ */
+
+/* Base: móvil primero */
+@media(max-width:480px){
+  .page-header{flex-direction:column;align-items:flex-start;gap:12px}
+  .page-header > div:last-child{display:flex;gap:8px;width:100%}
+  .page-header .btn{flex:1;text-align:center;padding:12px 8px;font-size:13px}
+  .page-title{font-size:20px}
+  .grid-4{grid-template-columns:1fr 1fr}
+  .stat-card .value{font-size:22px}
+  .timer-modal{border-radius:20px 20px 0 0 !important;position:fixed !important;bottom:0 !important;top:auto !important;transform:none !important;max-width:100% !important;width:100% !important;margin:0 !important;padding:24px 20px 32px !important}
+  #timer-overlay{align-items:flex-end}
+  #timer-time{font-size:52px !important}
+  .habit-actions{opacity:1 !important}
+  .habit-btn{padding:6px 12px;font-size:13px}
+  .cal-day{font-size:12px}
+  .modal{border-radius:20px 20px 0 0;position:fixed;bottom:0;top:auto;transform:none !important;max-width:100%;width:100%;margin:0;padding:24px 20px 32px;max-height:90vh}
+  #modal-overlay{align-items:flex-end}
+  .form-row{grid-template-columns:1fr}
+  .section-title{font-size:11px}
+}
+
+/* Tablets */
+@media(min-width:481px) and (max-width:768px){
+  .page-header{flex-wrap:wrap;gap:10px}
+  .grid-4{grid-template-columns:repeat(2,1fr)}
+  .timer-modal{max-width:440px}
+}
+
+/* Asegura accesibilidad táctil en mobile */
+@media(hover:none){
+  .habit-actions{opacity:1}
+  .habit-btn{min-height:36px;min-width:36px}
+  .cal-day{min-height:36px}
+  .nav-item,.mobile-nav-item{min-height:44px}
+}
+
+/* Sidebar-footer texto del rango */
+.level-badge{font-size:11px;flex-wrap:wrap;line-height:1.4}
+
+</style>
+</head>
+<body>
+
+<div class="app">
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <div>
+      <div class="logo-text">HabitOS</div>
+      <div class="logo-sub">Habit Intelligence</div>
+    </div>
+  </div>
+  <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">🏠</span>Dashboard<span class="nav-badge" id="badge-today">0</span></div>
+  <div class="nav-item" onclick="showPage('habits')"><span class="nav-icon">⚡</span>Mis Hábitos</div>
+  <div class="nav-item" onclick="showPage('calendar')"><span class="nav-icon">📅</span>Calendario</div>
+  <div class="nav-item" onclick="showPage('stats')"><span class="nav-icon">📊</span>Estadísticas</div>
+  <div class="sidebar-section">Personal</div>
+  <div class="nav-item" onclick="showPage('journal')"><span class="nav-icon">📝</span>Journal</div>
+  <div class="nav-item" onclick="showPage('achievements')"><span class="nav-icon">🏆</span>Logros</div>
+  <div class="nav-item" onclick="showPage('settings')"><span class="nav-icon">⚙️</span>Configuración</div>
+  <div class="sidebar-footer">
+    <div class="level-badge">⭐ Nivel <span id="level-num">1</span> — <span id="level-name">Iniciado</span></div>
+    <div class="xp-bar-label"><span>XP</span><span id="xp-label">0 / 500</span></div>
+    <div class="xp-bar-bg"><div class="xp-bar-fill" id="xp-bar" style="width:0%"></div></div>
+  </div>
+</aside>
+
+<main class="main">
+
+<div class="page active" id="page-dashboard">
+  <div class="page-header">
+    <div>
+      <div class="page-title" id="dashboard-greeting">Buenos días 👋</div>
+      <div class="page-sub" id="dashboard-date">Cargando...</div>
+      <div id="daily-quote-wrap" style="margin-top:10px;max-width:480px"></div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-timer" onclick="openTimer()">⏱ Cronómetro</button>
+      <button class="btn btn-primary" onclick="openModal()">＋ Nuevo Hábito</button>
+    </div>
+  </div>
+  <div id="insight-wrap"></div>
+  <div class="grid-4" style="margin-bottom:20px">
+    <div class="stat-card cyan"><div class="label">Completados</div><div class="value" id="stat-done">0</div><div class="sub">de hoy</div></div>
+    <div class="stat-card purple"><div class="label">Pendientes</div><div class="value" id="stat-pending">0</div><div class="sub">quedan hoy</div></div>
+    <div class="stat-card amber"><div class="label">Mejor racha</div><div class="value" id="stat-streak">0🔥</div><div class="sub">días seguidos</div></div>
+    <div class="stat-card pink"><div class="label">Total XP</div><div class="value" id="stat-xp">0</div><div class="sub">puntos ganados</div></div>
+  </div>
+  <div class="grid-2" style="margin-bottom:20px">
+    <div class="glass-card">
+      <div class="ring-container">
+        <div class="ring-wrap">
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="32" fill="none" stroke="#22252c" stroke-width="8"/>
+            <circle cx="40" cy="40" r="32" fill="none" stroke="url(#rg)" stroke-width="8" stroke-linecap="round" id="progress-ring" stroke-dasharray="201" stroke-dashoffset="201"/>
+            <defs><linearGradient id="rg" x1="0%" y1="0%" x2="100%"><stop offset="0%" style="stop-color:#00f5d4"/><stop offset="100%" style="stop-color:#9d4edd"/></linearGradient></defs>
+          </svg>
+          <div class="ring-pct" id="ring-pct">0%</div>
+        </div>
+        <div class="ring-info">
+          <div class="title">Progreso del día</div>
+          <div class="sub" id="ring-sub">Comienza tu jornada</div>
+        </div>
+      </div>
+      <div class="section-title">Esta semana</div>
+      <div class="bar-chart" id="week-bars"></div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px" id="week-labels"></div>
+    </div>
+    <div class="glass-card">
+      <div class="section-title">Hábitos de hoy</div>
+      <div id="today-habits-list"></div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-habits">
+  <div class="page-header">
+    <div><div class="page-title">Mis Hábitos</div><div class="page-sub">Gestiona tu rutina</div></div>
+    <button class="btn btn-primary" onclick="openModal()">＋ Nuevo Hábito</button>
+  </div>
+  <div class="search-bar">
+    <span class="search-icon">🔍</span>
+    <input type="text" placeholder="Buscar hábitos..." id="search-input" oninput="filterHabits()">
+  </div>
+  <div class="filter-row">
+    <div class="filter-chip active" onclick="setFilter('all',this)">Todos</div>
+    <div class="filter-chip" onclick="setFilter('Salud',this)">💚 Salud</div>
+    <div class="filter-chip" onclick="setFilter('Fitness',this)">💪 Fitness</div>
+    <div class="filter-chip" onclick="setFilter('Estudio',this)">📚 Estudio</div>
+    <div class="filter-chip" onclick="setFilter('Mentalidad',this)">🧘 Mentalidad</div>
+    <div class="filter-chip" onclick="setFilter('Finanzas',this)">💰 Finanzas</div>
+  </div>
+  <div id="habits-list"></div>
+</div>
+
+<div class="page" id="page-calendar">
+  <div class="page-header">
+    <div><div class="page-title">Calendario</div><div class="page-sub">Visualiza tu consistencia</div></div>
+  </div>
+  <div class="glass-card" style="margin-bottom:16px">
+    <div class="cal-header">
+      <div class="cal-nav">
+        <div class="cal-btn" onclick="changeMonth(-1)">‹</div>
+        <div class="cal-title" id="cal-month-label"></div>
+        <div class="cal-btn" onclick="changeMonth(1)">›</div>
+      </div>
+      <div style="font-size:13px;color:var(--text2)">Selecciona un hábito:</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="cal-habit-select"></div>
+    <div class="cal-grid" id="cal-grid"></div>
+  </div>
+  <div class="glass-card">
+    <div class="section-title">Mapa de actividad anual</div>
+    <div class="heatmap-grid" id="heatmap"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:11px;color:var(--text3)">
+      <span>Menos</span>
+      <div style="width:10px;height:10px;border-radius:2px;background:var(--bg3)"></div>
+      <div style="width:10px;height:10px;border-radius:2px;background:rgba(0,245,212,0.25)"></div>
+      <div style="width:10px;height:10px;border-radius:2px;background:rgba(0,245,212,0.5)"></div>
+      <div style="width:10px;height:10px;border-radius:2px;background:var(--cyan)"></div>
+      <span>Más</span>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-stats">
+  <div class="page-header">
+    <div><div class="page-title">Estadísticas</div><div class="page-sub">Tu rendimiento en datos</div></div>
+  </div>
+  <div class="grid-3" style="margin-bottom:20px">
+    <div class="stat-card cyan"><div class="label">Tasa de éxito</div><div class="value" id="success-rate">0%</div><div class="sub">este mes</div></div>
+    <div class="stat-card purple"><div class="label">Días perfectos</div><div class="value" id="perfect-days">0</div><div class="sub">100% completados</div></div>
+    <div class="stat-card amber"><div class="label">Hábitos activos</div><div class="value" id="active-habits">0</div><div class="sub">en seguimiento</div></div>
+  </div>
+  <div class="glass-card" style="margin-bottom:16px">
+    <div class="section-title">Rendimiento por categoría</div>
+    <div id="cat-stats"></div>
+  </div>
+  <div class="glass-card">
+    <div class="section-title">Resumen por hábito</div>
+    <div id="habit-stats-list"></div>
+  </div>
+</div>
+
+<div class="page" id="page-journal">
+  <div class="page-header">
+    <div><div class="page-title">Journal</div><div class="page-sub" id="journal-date">Hoy</div></div>
+  </div>
+  <div class="glass-card" style="margin-bottom:16px">
+    <div class="section-title">Estado de ánimo</div>
+    <div class="mood-row">
+      <div class="mood-btn" onclick="setMood('😔',this)">😔</div>
+      <div class="mood-btn" onclick="setMood('😐',this)">😐</div>
+      <div class="mood-btn" onclick="setMood('🙂',this)">🙂</div>
+      <div class="mood-btn" onclick="setMood('😊',this)">😊</div>
+      <div class="mood-btn" onclick="setMood('🤩',this)">🤩</div>
+    </div>
+    <div class="section-title">Nivel de energía</div>
+    <div class="energy-wrap" id="energy-row"></div>
+    <div class="section-title" style="margin-top:12px">Notas del día</div>
+    <textarea class="form-input" id="journal-notes" placeholder="¿Cómo fue tu día? ¿Qué lograste? ¿Qué puedes mejorar?..." rows="4"></textarea>
+    <div style="margin-top:12px;display:flex;gap:10px">
+      <button class="btn btn-primary" onclick="saveJournal()">💾 Guardar entrada</button>
+      <button class="btn btn-ghost" onclick="loadJournal()">📖 Cargar</button>
+    </div>
+  </div>
+  <div class="glass-card">
+    <div class="section-title">Historial reciente</div>
+    <div id="journal-history"></div>
+  </div>
+</div>
+
+<div class="page" id="page-achievements">
+  <div class="page-header">
+    <div><div class="page-title">Logros &amp; Rangos</div><div class="page-sub">Sistema de progresión Solo Leveling</div></div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="grid-4" style="margin-bottom:20px">
+    <div class="stat-card amber"><div class="label">XP Total</div><div class="value" id="ach-xp">0</div><div class="sub">puntos acumulados</div></div>
+    <div class="stat-card purple"><div class="label">Nivel</div><div class="value" id="ach-level">1</div><div class="sub" id="ach-level-name">Rango E</div></div>
+    <div class="stat-card cyan"><div class="label">Logros</div><div class="value" id="ach-unlocked">0</div><div class="sub">desbloqueados</div></div>
+    <div class="stat-card pink"><div class="label">Penalizaciones</div><div class="value" id="ach-penalties">0</div><div class="sub">recibidas</div></div>
+  </div>
+
+  <!-- XP progress toward next rank -->
+  <div class="glass-card" style="margin-bottom:16px" id="rank-progress-card"></div>
+
+  <!-- Rank road map -->
+  <div class="glass-card" style="margin-bottom:16px">
+    <div class="section-title">Mapa de Rangos</div>
+    <div id="rank-roadmap"></div>
+  </div>
+
+  <!-- Penalty history -->
+  <div class="glass-card" style="margin-bottom:16px">
+    <div class="section-title">⚠️ Penalizaciones del Sistema</div>
+    <div id="penalty-history"></div>
+  </div>
+
+  <!-- Achievements -->
+  <div class="glass-card">
+    <div class="section-title">Insignias &amp; Logros</div>
+    <div id="achievements-list"></div>
+  </div>
+</div>
+
+<div class="page" id="page-settings">
+  <div class="page-header">
+    <div><div class="page-title">Configuración</div><div class="page-sub">Personaliza tu experiencia</div></div>
+  </div>
+  <div class="glass-card" style="margin-bottom:16px">
+    <div class="section-title">Tema</div>
+    <div class="theme-bar">
+      <div class="theme-btn active" onclick="setTheme('neon',this)">🌌 Dark Neon</div>
+      <div class="theme-btn" onclick="setTheme('cyber',this)">🔵 Cyberpunk</div>
+      <div class="theme-btn" onclick="setTheme('midnight',this)">🌙 Midnight</div>
+      <div class="theme-btn" onclick="setTheme('amoled',this)">⚫ AMOLED</div>
+    </div>
+  </div>
+  <div class="glass-card" style="margin-bottom:16px">
+    <div class="section-title">Exportar datos</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="btn btn-primary" onclick="exportJSON()">📦 Exportar JSON</button>
+      <button class="btn btn-primary" onclick="exportCSV()">📊 Exportar CSV</button>
+      <button class="btn btn-primary" onclick="exportXLSX()">📗 Exportar Excel</button>
+      <button class="btn btn-ghost" onclick="resetAll()">🔄 Reiniciar mes actual</button>
+    </div>
+    <div style="height:1px;background:var(--glass-border);margin:12px 0"></div>
+    <div class="section-title" style="margin-bottom:10px">📝 Formulario offline</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:10px;line-height:1.6">
+      Sin internet, descarga este formulario HTML, llénalo con tu progreso del día y guárdalo. Luego impórtalo aquí cuando vuelvas a conectarte.
+    </div>
+    <button class="btn btn-primary" onclick="downloadOfflineForm()" style="width:100%;justify-content:center">
+      ⬇️ Descargar formulario offline (.html)
+    </button>
+  </div>
+  <div class="glass-card" style="margin-bottom:16px">
+    <div class="section-title">📥 Importar progreso offline</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6">
+      Si estuviste sin internet, exporta tu progreso desde el dispositivo offline y súbelo aquí para sincronizarlo.
+    </div>
+    <div id="import-drop-zone" onclick="document.getElementById('import-file-input').click()"
+      style="border:2px dashed var(--glass-border);border-radius:12px;padding:24px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--glass)">
+      <div style="font-size:28px;margin-bottom:8px">📂</div>
+      <div style="font-size:14px;font-weight:600;color:var(--text1)">Haz clic para seleccionar archivo JSON</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:4px">Acepta: .json (backup), .xlsx/.csv (Excel), formulario offline (.html)</div>
+    </div>
+    <input type="file" id="import-file-input" accept=".json,.xlsx,.xls,.csv" style="display:none" onchange="importJSON(event)">
+    <div id="import-status" style="display:none;margin-top:12px;padding:12px 16px;border-radius:10px;font-size:13px"></div>
+    <div style="margin-top:12px;font-size:12px;color:var(--text3);line-height:1.6">
+      💡 <strong style="color:var(--text2)">Flujo offline:</strong> Descarga el formulario offline → llénalo sin internet → guárdalo → impórtalo aquí. También puedes importar backups .json, .xlsx o .csv. Los datos se <strong style="color:var(--cyan)">fusionan</strong>, no se sobreescriben.
+    </div>
+  </div>
+  <div class="glass-card">
+    <div class="section-title">Información</div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.8">
+      <div>Versión: <strong style="color:var(--cyan)">3.0.0</strong></div>
+      <div>Datos guardados en LocalStorage del navegador</div>
+      <div>Stack: HTML + CSS + Vanilla JS — Sin dependencias externas</div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<nav class="mobile-nav">
+  <div class="mobile-nav-items">
+    <div class="mobile-nav-item active" onclick="showPage('dashboard')"><span>🏠</span><span class="mobile-nav-label">Inicio</span></div>
+    <div class="mobile-nav-item" onclick="showPage('habits')"><span>⚡</span><span class="mobile-nav-label">Hábitos</span></div>
+    <div class="mobile-nav-item" onclick="showPage('calendar')"><span>📅</span><span class="mobile-nav-label">Cal</span></div>
+    <div class="mobile-nav-item" onclick="showPage('stats')"><span>📊</span><span class="mobile-nav-label">Stats</span></div>
+    <div class="mobile-nav-item" onclick="showPage('journal')"><span>📝</span><span class="mobile-nav-label">Journal</span></div>
+  </div>
+</nav>
+
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOut(event)">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">✨ Nuevo Hábito</div>
+    <div class="form-group">
+      <label class="form-label">Nombre del hábito</label>
+      <input class="form-input" id="h-name" placeholder="Ej: Leer 30 minutos..." maxlength="50">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Categoría</label>
+        <select class="form-input" id="h-cat">
+          <option>Salud</option><option>Fitness</option><option>Estudio</option>
+          <option>Mentalidad</option><option>Finanzas</option><option>Personal</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prioridad</label>
+        <select class="form-input" id="h-priority">
+          <option value="Alta">🔴 Alta</option>
+          <option value="Media" selected>🟡 Media</option>
+          <option value="Baja">🟢 Baja</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Emoji / Icono</label>
+      <div class="emoji-pick" id="emoji-pick"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Color</label>
+      <div class="color-pick" id="color-pick"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tipo de hábito</label>
+      <select class="form-input" id="h-type">
+        <option value="positive">✅ Positivo (hacer)</option>
+        <option value="negative">🚫 Negativo (evitar)</option>
+      </select>
+    </div>
+    <input type="hidden" id="edit-id">
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveHabit()">💾 Guardar</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ MODAL CRONÓMETRO ══════════════════════════════════════════ -->
+<div class="modal-overlay" id="timer-overlay" onclick="closeTimerOut(event)">
+  <div class="modal timer-modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div class="modal-title" style="margin-bottom:0">⏱ Control de Tiempo</div>
+      <button class="btn btn-ghost" style="padding:6px 12px;font-size:18px" onclick="closeTimer()">×</button>
+    </div>
+
+    <!-- Modo selector -->
+    <div style="display:flex;gap:8px;margin-bottom:20px" id="timer-mode-btns">
+      <button class="btn timer-mode-btn active" id="btn-mode-count" onclick="setTimerMode('countdown')">⏬ Cuenta regresiva</button>
+      <button class="btn timer-mode-btn" id="btn-mode-stop" onclick="setTimerMode('stopwatch')">⏫ Cronómetro</button>
+    </div>
+
+    <!-- Configurar tiempo (solo modo countdown) -->
+    <div id="timer-config" style="display:flex;gap:10px;margin-bottom:20px;align-items:center">
+      <div style="flex:1">
+        <label class="form-label">Minutos</label>
+        <input class="form-input" type="number" id="timer-min" value="25" min="0" max="180" style="text-align:center;font-size:20px;font-weight:700">
+      </div>
+      <div style="font-size:28px;color:var(--text3);padding-top:18px">:</div>
+      <div style="flex:1">
+        <label class="form-label">Segundos</label>
+        <input class="form-input" type="number" id="timer-sec" value="0" min="0" max="59" style="text-align:center;font-size:20px;font-weight:700">
+      </div>
+    </div>
+
+    <!-- Display del tiempo -->
+    <div id="timer-display" style="text-align:center;margin-bottom:24px">
+      <div id="timer-time" style="font-size:64px;font-weight:700;letter-spacing:4px;color:var(--cyan);text-shadow:0 0 30px rgba(0,245,212,0.4);line-height:1;font-variant-numeric:tabular-nums">25:00</div>
+      <div id="timer-status" style="font-size:13px;color:var(--text3);margin-top:8px;height:18px">Listo para comenzar</div>
+    </div>
+
+    <!-- Barra de progreso -->
+    <div style="height:4px;background:var(--bg3);border-radius:4px;overflow:hidden;margin-bottom:20px">
+      <div id="timer-progress" style="height:100%;width:0%;background:linear-gradient(90deg,var(--cyan),var(--purple));border-radius:4px;transition:width 1s linear"></div>
+    </div>
+
+    <!-- Controles -->
+    <div style="display:flex;gap:10px;justify-content:center;margin-bottom:16px">
+      <button class="btn btn-primary" id="timer-start-btn" onclick="timerStart()" style="flex:1;font-size:16px;padding:14px">▶ Iniciar</button>
+      <button class="btn btn-ghost" id="timer-pause-btn" onclick="timerPause()" style="display:none;flex:1;font-size:16px;padding:14px">⏸ Pausar</button>
+      <button class="btn btn-ghost" onclick="timerReset()" style="padding:14px 20px;font-size:16px">↺</button>
+    </div>
+
+    <!-- Recordatorio -->
+    <div id="timer-reminder" style="display:none;background:linear-gradient(135deg,rgba(0,245,212,0.1),rgba(157,78,221,0.1));border:1px solid rgba(0,245,212,0.3);border-radius:12px;padding:14px;text-align:center;font-size:13px;color:var(--text1);line-height:1.6">
+      🎯 <strong style="color:var(--cyan)">¡Tiempo completado!</strong><br>
+      Ve a tu lista de hábitos y marca como<br>
+      <strong>✓ Cumplido</strong> el hábito que acababas de realizar.
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// 365 FRASES MOTIVACIONALES — Una por día del año
+// ══════════════════════════════════════════════════════════════════
+const DAILY_QUOTES = [
+  // Días 1-30: El Valor de Empezar
+  {q:"El primer paso siempre es el más difícil, pero es el único que cuenta.",s:"Fullmetal Alchemist"},
+  {q:"No son nuestras habilidades las que muestran cómo somos sino nuestras elecciones.",s:"Harry Potter"},
+  {q:"¿Por qué caemos? Para aprender a levantarnos.",s:"Batman Inicia"},
+  {q:"Incluso la persona más pequeña puede cambiar el curso del futuro.",s:"El Señor de los Anillos"},
+  {q:"No me importa a quién te enfrentes. Supera tus límites. Aquí y ahora.",s:"Black Clover"},
+  {q:"Hacer o no hacer. No existe el intentar.",s:"Star Wars"},
+  {q:"El futuro no está establecido. No hay más destino que el que nosotros nos forjamos.",s:"Terminator 2"},
+  {q:"Tu único límite es tu alma.",s:"Ratatouille"},
+  {q:"Si esperas a que llegue el momento perfecto, nunca dejarás de esperar.",s:"Bleach"},
+  {q:"Un viaje de mil millas comienza con un solo paso.",s:"Avatar: La Leyenda de Aang"},
+  {q:"El mañana pertenece a aquellos que se preparan para él hoy.",s:"Bleach"},
+  {q:"No dejes que los miedos de tu pasado interfieran en los deseos de tu futuro.",s:"Bojack Horseman"},
+  {q:"La clave no es las ganas de ganar. Es la voluntad de prepararse para ganar.",s:"Ted Lasso"},
+  {q:"A veces el camino correcto no es el más fácil.",s:"Pocahontas"},
+  {q:"Nunca dejes que nadie te diga que no puedes hacer algo.",s:"En Busca de la Felicidad"},
+  {q:"El miedo te mantiene prisionero. La esperanza te da la libertad.",s:"The Shawshank Redemption"},
+  {q:"No tienes que ser un héroe para cambiar el mundo, solo tener el valor de intentarlo.",s:"My Hero Academia"},
+  {q:"Si tienes un sueño, tienes que protegerlo.",s:"En Busca de la Felicidad"},
+  {q:"La excelencia no es un acto, es un hábito.",s:"The Crown"},
+  {q:"Cada día es una nueva oportunidad para cambiar tu vida.",s:"The Truman Show"},
+  {q:"La única forma de hacer lo imposible es creer que es posible.",s:"Alicia en el País de las Maravillas"},
+  {q:"A veces tienes que correr antes de poder caminar.",s:"Tony Stark"},
+  {q:"El destino se encuentra a menudo en el camino que se toma para evitarlo.",s:"Kung Fu Panda"},
+  {q:"Si no puedes volar, corre; si no puedes correr, camina.",s:"Peaky Blinders"},
+  {q:"La vida empieza donde termina tu zona de confort.",s:"The Secret Life of Walter Mitty"},
+  {q:"Tu vida empieza donde termina tu zona de confort.",s:"Walter Mitty"},
+  {q:"No cuentes los días, haz que los días cuenten.",s:"Forrest Gump"},
+  {q:"El futuro pertenece a quienes creen en la belleza de sus sueños.",s:"My Hero Academia"},
+  {q:"Cada segundo que pasa es una oportunidad para cambiar.",s:"Collateral"},
+  {q:"Comienza donde estás, usa lo que tienes, haz lo que puedas.",s:"Ted Lasso"},
+  // Días 31-60: Resiliencia y Disciplina
+  {q:"No importa qué tan lento vayas, siempre y cuando no te detengas.",s:"Haikyuu!!"},
+  {q:"Si eres débil, tienes la ventaja de que puedes volverte más fuerte.",s:"Eyeshield 21"},
+  {q:"La noche es más oscura justo antes del amanecer.",s:"Batman: El Caballero de la Noche"},
+  {q:"No me importa si es imposible, lo haré de todos modos.",s:"One Piece"},
+  {q:"El trabajo duro supera al talento natural cuando el talento natural no trabaja duro.",s:"Naruto"},
+  {q:"Para ganar algo, debes perder algo de igual valor.",s:"Fullmetal Alchemist"},
+  {q:"La fuerza viene de una voluntad indomable.",s:"Gladiador"},
+  {q:"El dolor es temporal, el orgullo es para siempre.",s:"Karate Kid"},
+  {q:"Incluso si las posibilidades son bajas, nunca debes rendirte hasta el final.",s:"Hunter x Hunter"},
+  {q:"La única forma de salir es a través.",s:"The Leftovers"},
+  {q:"El sudor de hoy es el triunfo de mañana.",s:"Hajime no Ippo"},
+  {q:"El fracaso es el mejor maestro.",s:"Star Wars: Los Últimos Jedi"},
+  {q:"La disciplina es el puente entre las metas y los logros.",s:"Cobra Kai"},
+  {q:"No te rindas. Sufre ahora y vive el resto de tu vida como un campeón.",s:"Creed"},
+  {q:"Si caes siete veces, levántate ocho.",s:"Rurouni Kenshin"},
+  {q:"La paciencia es amarga, pero su fruto es dulce.",s:"Vikings"},
+  {q:"No puedes derrotar a alguien que nunca se rinde.",s:"Gurren Lagann"},
+  {q:"La perseverancia es el trabajo duro después de cansarte del trabajo duro que ya hiciste.",s:"Demon Slayer"},
+  {q:"No busques una vida fácil, busca la fuerza para soportar una difícil.",s:"Bruce Lee"},
+  {q:"El único error real es aquel del que no aprendemos nada.",s:"El Rey León"},
+  {q:"No te da vergüenza fracasar, te da vergüenza no intentarlo.",s:"Batman Inicia"},
+  {q:"Si estás pasando por un infierno, sigue adelante.",s:"Dark"},
+  {q:"El poder no se te da, tienes que tomarlo.",s:"Succession"},
+  {q:"No hay atajos para llegar a los lugares que valen la pena.",s:"Death Note"},
+  {q:"Las cosas difíciles requieren tiempo, las imposibles un poco más.",s:"The Wire"},
+  {q:"El esfuerzo humano no tiene límites.",s:"The Theory of Everything"},
+  {q:"Incluso si las probabilidades están en tu contra, actúa.",s:"Attack on Titan"},
+  {q:"La victoria siempre es posible para la persona que se niega a dejar de luchar.",s:"Napoleon Hill"},
+  {q:"No cuentes los días, haz que los días cuenten.",s:"Hajime no Ippo"},
+  {q:"Un campeón no es alguien que nunca cae, sino alguien que se levanta cuando cae.",s:"Rocky"},
+  // Días 61-90: Identidad y Amor Propio
+  {q:"Nunca olvides lo que eres, conviértelo en tu fuerza.",s:"Game of Thrones"},
+  {q:"Ser tú mismo en un mundo que constantemente intenta cambiarte es el mayor logro.",s:"Sherlock"},
+  {q:"Prefiero ser odiado por lo que soy que amado por lo que no soy.",s:"Evangelion"},
+  {q:"Tu identidad es tu posesión más valiosa. Protégela.",s:"Los Increíbles"},
+  {q:"Si no eres nada sin el traje, entonces no deberías tenerlo.",s:"Tony Stark"},
+  {q:"Aceptar quién eres es la forma más alta de madurez.",s:"Mob Psycho 100"},
+  {q:"No te compares con los demás, compárate con quien eras ayer.",s:"Vinland Saga"},
+  {q:"No necesitas la aprobación de nadie para ser feliz.",s:"Bojack Horseman"},
+  {q:"Es genial ser diferente. No te disculpes por ello.",s:"Stranger Things"},
+  {q:"La verdadera fuerza radica en ser capaz de mirar tus propias debilidades.",s:"Fairy Tail"},
+  {q:"Para encontrarte a ti mismo, primero debes perderte.",s:"Into the Wild"},
+  {q:"El amor propio es el comienzo de un romance de por vida.",s:"Downton Abbey"},
+  {q:"Tu valor no disminuye por la incapacidad de alguien de ver tu valía.",s:"The Marvelous Mrs. Maisel"},
+  {q:"Sé la versión de ti mismo que quieres ver en el mundo.",s:"The Good Place"},
+  {q:"Aprende a quererte antes de querer a alguien más.",s:"Sex Education"},
+  {q:"La vulnerabilidad no es debilidad, es nuestra mayor medida de valor.",s:"Ted Lasso"},
+  {q:"No cambies para encajar, cambia el mundo a tu alrededor.",s:"Code Geass"},
+  {q:"Tú eres suficiente tal y como eres.",s:"The Bear"},
+  {q:"El autodescubrimiento es un viaje doloroso pero necesario.",s:"Mr. Robot"},
+  {q:"No te escondas detrás de una máscara. El mundo necesita ver tu verdadero rostro.",s:"V de Vendetta"},
+  // Días 91-120: Superación del Fracaso
+  {q:"No importa lo duro que golpees, sino lo duro que puedan golpearte y seguir avanzando.",s:"Rocky Balboa"},
+  {q:"El fracaso es simplemente la oportunidad de comenzar de nuevo, más inteligentemente.",s:"Avatar: La Leyenda de Korra"},
+  {q:"No puedes ganar todas las batallas, pero puedes aprender de cada derrota.",s:"Cobra Kai"},
+  {q:"El pasado puede doler, pero puedes huir de él o aprender.",s:"El Rey León"},
+  {q:"El dolor es el gran maestro. Te dice dónde están tus límites.",s:"Daredevil"},
+  {q:"No llores porque terminó, sonríe porque sucedió.",s:"500 Days of Summer"},
+  {q:"Las cicatrices nos recuerdan dónde hemos estado, no hacia dónde vamos.",s:"Hannibal"},
+  {q:"A veces, tienes que perder la batalla para ganar la guerra.",s:"Peaky Blinders"},
+  {q:"La única derrota real es no volver a intentarlo.",s:"Saint Seiya"},
+  {q:"El error no define quién eres, sino cómo respondes a él.",s:"Better Call Saul"},
+  {q:"No puedes cambiar lo que pasó, pero puedes cambiar lo que viene a continuación.",s:"Lost"},
+  {q:"Si caes, levántate con una sonrisa. Eso confunde al enemigo.",s:"One Piece"},
+  {q:"El fracaso es una opción aquí. Si no estás fallando, no estás innovando.",s:"Halt and Catch Fire"},
+  {q:"No te estanques en tus errores. Úsalos como escalones.",s:"Gintama"},
+  {q:"El dolor es inevitable. El sufrimiento es opcional.",s:"Erased"},
+  {q:"Cada herida es una lección y cada lección nos hace mejores.",s:"Game of Thrones"},
+  {q:"No te rindas ante la desesperación. El sol volverá a salir.",s:"The Mandalorian"},
+  {q:"La resiliencia es aceptar tu nueva realidad, incluso si es menos buena.",s:"The West Wing"},
+  {q:"No te desanimes, a menudo es la última llave la que abre la puerta.",s:"Soul"},
+  {q:"Incluso si pierdes todo, todavía te queda el futuro.",s:"Trigun"},
+  // Días 121-150: El Tiempo y el Presente
+  {q:"El ayer es historia, el mañana es un misterio, pero hoy es un regalo.",s:"Kung Fu Panda"},
+  {q:"Todo lo que tenemos que decidir es qué hacer con el tiempo que se nos ha dado.",s:"El Señor de los Anillos"},
+  {q:"No dejes que el tiempo dicte tus metas. Tú dictas tu tiempo.",s:"Steins;Gate"},
+  {q:"El momento presente es el único momento del que tenemos control.",s:"Midnight Diner"},
+  {q:"El tiempo es un recurso no renovable. Úsalo sabiamente.",s:"In Time"},
+  {q:"El enfoque es la clave de todo éxito.",s:"Sherlock"},
+  {q:"No cuentes los minutos, haz que los minutos cuenten.",s:"Billions"},
+  {q:"No dejes para mañana lo que puedes hacer hoy.",s:"Cowboy Bebop"},
+  {q:"La paciencia no es la capacidad de esperar, sino cómo nos comportamos mientras esperamos.",s:"The Crown"},
+  {q:"El tiempo vuela, pero recuerda que tú eres el piloto.",s:"Catch Me If You Can"},
+  {q:"Concéntrate en lo que puedes controlar, deja ir lo que no.",s:"Succession"},
+  {q:"Cada segundo cuenta cuando estás construyendo tu futuro.",s:"Dr. Stone"},
+  {q:"Aprovecha el día. Haz que tu vida sea extraordinaria.",s:"Dead Poets Society"},
+  {q:"No puedes recuperar el tiempo perdido, pero puedes dejar de perderlo.",s:"Breaking Bad"},
+  {q:"El enfoque nítido disipa cualquier duda.",s:"Demon Slayer"},
+  {q:"La distracción es el enemigo de la ejecución.",s:"The Bear"},
+  {q:"Vive el momento, porque nada dura para siempre.",s:"Skins"},
+  {q:"El ayer ya se fue, concéntrate en la carrera de hoy.",s:"Initial D"},
+  {q:"La vida es corta, rompe las reglas, perdona rápido.",s:"Suits"},
+  {q:"Haz que cada día cuente como si fuera el último.",s:"Titanic"},
+  // Días 151-180: Liderazgo y Relaciones
+  {q:"Un líder no es aquel que impone, sino aquel que inspira a los demás a dar lo mejor.",s:"Code Geass"},
+  {q:"Si quieres ir rápido, ve solo. Si quieres ir lejos, ve acompañado.",s:"The West Wing"},
+  {q:"La empatía es la mayor cualidad de un ser humano.",s:"To Kill a Mockingbird"},
+  {q:"Un verdadero amigo es aquel que entra cuando el resto del mundo sale.",s:"Friends"},
+  {q:"El liderazgo no consiste en estar al mando, sino en cuidar de las personas a tu cargo.",s:"Band of Brothers"},
+  {q:"Trata a las personas con amabilidad, nunca sabes por lo que están pasando.",s:"Ted Lasso"},
+  {q:"La lealtad no es algo que se pide, es algo que se gana.",s:"Suits"},
+  {q:"El trabajo en equipo hace que el sueño funcione.",s:"Haikyuu!!"},
+  {q:"Escuchar es la herramienta más poderosa de un líder.",s:"Mad Men"},
+  {q:"La amabilidad es un idioma que los sordos pueden oír y los ciegos pueden ver.",s:"Violet Evergarden"},
+  {q:"El respeto se gana, no se exige.",s:"Peaky Blinders"},
+  {q:"Nadie ha llegado a la cima sin la ayuda de otros.",s:"My Hero Academia"},
+  {q:"La comprensión mutua es la base de cualquier paz duradera.",s:"Monster"},
+  {q:"Un verdadero líder asume la culpa y comparte el éxito.",s:"One Piece"},
+  {q:"Aprende a perdonar, no por los demás, sino por tu propia paz mental.",s:"Vinland Saga"},
+  {q:"Un líder es un distribuidor de esperanza.",s:"The Newsroom"},
+  {q:"La honestidad brutal es mejor que una mentira reconfortante.",s:"Dr. House"},
+  {q:"El amor y la amistad son las fuerzas más poderosas del universo.",s:"Fairy Tail"},
+  {q:"La confianza tarda años en construirse, segundos en romperse.",s:"House of Cards"},
+  {q:"No mires a los demás por encima del hombro a menos que los estés ayudando a levantarse.",s:"The Sopranos"},
+  // Días 181-210: Ambición y Éxito
+  {q:"Si vas a intentarlo, ve hasta el final. De lo contrario, ni siquiera empieces.",s:"Factotum"},
+  {q:"La excelencia no es una opción, es un requisito para sobrevivir.",s:"The Bear"},
+  {q:"No juegues para no perder, juega para ganar.",s:"Haikyuu!!"},
+  {q:"La complacencia es el enemigo del progreso.",s:"Silicon Valley"},
+  {q:"Si quieres ser el mejor, tienes que estar dispuesto a hacer lo que el resto no quiere.",s:"Whiplash"},
+  {q:"No te estanques en un nivel, busca siempre superar tus propios límites.",s:"Dragon Ball Z"},
+  {q:"El conocimiento es poder, pero la ejecución es lo que trae resultados.",s:"Death Note"},
+  {q:"La disciplina le gana al talento cada vez que el talento se vuelve perezoso.",s:"Kuroko no Basket"},
+  {q:"Sé tan bueno que no puedan ignorarte.",s:"The Marvelous Mrs. Maisel"},
+  {q:"No pidas permiso. El éxito no se pide, se toma.",s:"Peaky Blinders"},
+  {q:"La visión sin ejecución es solo una alucinación.",s:"Mr. Robot"},
+  {q:"Si quieres ver un cambio, sé tú el catalizador de ese cambio.",s:"Dr. Stone"},
+  {q:"El riesgo es el precio que pagas por la oportunidad.",s:"Better Call Saul"},
+  {q:"No busques excusas, busca soluciones.",s:"Suits"},
+  {q:"No hay límites para aquellos que se atreven a soñar en grande.",s:"Gurren Lagann"},
+  {q:"El dolor de la disciplina no es nada comparado con el dolor del arrepentimiento.",s:"Creed"},
+  {q:"Sé implacable en la búsqueda de lo que enciende tu alma.",s:"Evangelion"},
+  {q:"No bajes tus metas, aumenta tus esfuerzos.",s:"Hunter x Hunter"},
+  {q:"El éxito no es para los inteligentes, es para los que persisten.",s:"Breaking Bad"},
+  {q:"Construye tus propios sueños o alguien más te contratará para construir los suyos.",s:"The Great Gatsby"},
+  // Días 211-240: Sabiduría y Filosofía
+  {q:"La vida no es un problema que deba ser resuelto, sino una realidad que debe ser experimentada.",s:"Dune"},
+  {q:"Las cosas que posees terminan poseyéndote.",s:"Fight Club"},
+  {q:"La ignorancia es la felicidad, pero el conocimiento es la libertad.",s:"The Matrix"},
+  {q:"Para entender el mundo, a veces debes alejarte de él.",s:"Into the Wild"},
+  {q:"El cambio es la única constante en el universo.",s:"Star Trek"},
+  {q:"Acepta las cosas que no puedes cambiar y ten el valor de cambiar las que puedes.",s:"The Good Place"},
+  {q:"No busques el sentido de la vida, dale tú el sentido.",s:"Evangelion"},
+  {q:"El desapego no es que no poseas nada, sino que nada te posea a ti.",s:"Avatar: La Leyenda de Korra"},
+  {q:"No vemos las cosas como son, las vemos como somos.",s:"Inception"},
+  {q:"El conocimiento te dará poder, pero el carácter te dará respeto.",s:"Ip Man"},
+  {q:"La muerte no es lo opuesto a la vida, sino una parte de ella.",s:"Norwegian Wood"},
+  {q:"No te dejes llevar por la ira; la ira nubla el juicio.",s:"Vinland Saga"},
+  {q:"El sabio no dice todo lo que piensa, pero siempre piensa todo lo que dice.",s:"The Crown"},
+  {q:"Parte del viaje es el final.",s:"Tony Stark"},
+  {q:"Nada dura para siempre, ni siquiera tus problemas.",s:"BoJack Horseman"},
+  {q:"La verdad os hará libres, pero primero os hará enfadar.",s:"The West Wing"},
+  {q:"El silencio es a menudo la mejor respuesta.",s:"The Young Pope"},
+  {q:"La vida no es justa, pero puedes elegir ser justo en un mundo injusto.",s:"Monster"},
+  {q:"Todo pasa, todo fluye, nada permanece.",s:"Her"},
+  {q:"El mayor misterio del universo no es el espacio, sino la mente humana.",s:"Interstellar"},
+  // Días 241-270: Coraje y Miedo
+  {q:"El miedo es el asesino de la mente. El miedo es la pequeña muerte.",s:"Dune"},
+  {q:"No hay valor sin miedo. El valor es mirar al miedo a los ojos y seguir adelante.",s:"Gintama"},
+  {q:"El coraje no es la ausencia de miedo, sino el juicio de que algo más es más importante.",s:"The Princess Diaries"},
+  {q:"Prefiero morir de pie que vivir de rodillas.",s:"Bleach"},
+  {q:"El miedo te hace prestar atención. Úsalo a tu favor.",s:"Primal"},
+  {q:"No dejes que el miedo a perder sea mayor que la emoción de ganar.",s:"Jerry Maguire"},
+  {q:"El único muro que te detiene es el que tú mismo has construido.",s:"Attack on Titan"},
+  {q:"Si no luchas por lo que quieres, no llores por lo que pierdes.",s:"Berserk"},
+  {q:"No tengas miedo de renunciar a lo bueno para ir por lo grandioso.",s:"Billions"},
+  {q:"El coraje se contagia. Cuando un hombre valiente se pone de pie, las espinas de los demás se enderezan.",s:"Gladiador"},
+  {q:"No temas a la tormenta, aprende a navegar en ella.",s:"Vikings"},
+  {q:"El miedo nos mantiene vivos, pero el coraje nos hace vivir.",s:"The Croods"},
+  {q:"El valor es la capacidad de actuar adecuadamente incluso cuando estás muerto de miedo.",s:"Saving Private Ryan"},
+  {q:"La única forma de vencer al miedo es pasar a través de él.",s:"The Good Dinosaur"},
+  {q:"El miedo te encierra en ti mismo, el amor te abre al mundo.",s:"Sense8"},
+  {q:"Sé audaz, sé valiente, sé implacable.",s:"Spartacus"},
+  {q:"Si estás asustado, significa que estás a punto de hacer algo realmente valiente.",s:"Doctor Who"},
+  {q:"No huyas de tus problemas. Enfréntalos y verás cómo se encogen.",s:"Yu Yu Hakusho"},
+  {q:"No te disculpes por ser fuerte.",s:"Jujutsu Kaisen"},
+  {q:"El coraje no ruge siempre. A veces es la pequeña voz que dice: lo intentaré de nuevo mañana.",s:"The Leftovers"},
+  // Días 271-300: Propósito y Legado
+  {q:"¿Qué hacemos en la vida? Eco en la eternidad.",s:"Gladiador"},
+  {q:"No se trata de cuánto tiempo vives, sino de cómo lo vives.",s:"One Piece"},
+  {q:"Un hombre no muere cuando su corazón deja de latir, muere cuando es olvidado.",s:"One Piece"},
+  {q:"El propósito de la vida es una vida con propósito.",s:"Westworld"},
+  {q:"Deja el mundo un poco mejor de como lo encontraste.",s:"Documentales"},
+  {q:"Tu legado es el impacto que dejas en las personas que amas.",s:"Six Feet Under"},
+  {q:"La pasión es el motor del alma.",s:"Blue Period"},
+  {q:"Encuentra algo por lo que valga la pena luchar y quédate ahí.",s:"Arcane"},
+  {q:"No dejes que tu vida sea un accidente, haz que sea una obra de arte.",s:"La Gran Belleza"},
+  {q:"Haz lo que amas y no trabajarás un solo día de tu vida.",s:"Mad Men"},
+  {q:"Tu vida es tu mensaje para el mundo. Asegúrate de que sea inspirador.",s:"The Chosen"},
+  {q:"Vive de tal manera que cuando mueras, el mundo llore y tú sonrías.",s:"Rurouni Kenshin"},
+  {q:"No malgastes tus días buscando aprobación; busca impacto.",s:"The Crown"},
+  {q:"Si no vives para algo, morirás por nada.",s:"Peaky Blinders"},
+  {q:"El sentido de la vida es encontrar tu don. El propósito es entregarlo.",s:"Fleabag"},
+  {q:"Vive con pasión, ama con locura, lucha con fuerza.",s:"Vampire Diaries"},
+  {q:"Deja que tus acciones hablen más fuerte que tus palabras.",s:"Vinland Saga"},
+  {q:"El fin de una historia es solo el comienzo de otra.",s:"The Good Place"},
+  {q:"No dejes que tu fuego se apague, chispa a chispa.",s:"Soul"},
+  {q:"Como símbolo puedo ser incorruptible, eterno.",s:"Bruce Wayne"},
+  // Días 301-330: Adaptación al Cambio
+  {q:"Sé agua, mi amigo. El agua fluye o puede chocar.",s:"Bruce Lee"},
+  {q:"Si no puedes cambiar la dirección del viento, ajusta tus velas.",s:"Cast Away"},
+  {q:"La adaptabilidad es la clave de la evolución.",s:"Evangelion"},
+  {q:"El cambio no es una amenaza, es una oportunidad.",s:"Silicon Valley"},
+  {q:"No te aferres al pasado si quieres sobrevivir al futuro.",s:"Cowboy Bebop"},
+  {q:"La vida cambia en un instante, debes estar listo para pivotar.",s:"Friends"},
+  {q:"La flexibilidad mental es más poderosa que la fuerza física.",s:"Hunter x Hunter"},
+  {q:"Si el plan no funciona, cambia el plan, pero nunca cambies la meta.",s:"La Casa de Papel"},
+  {q:"Acepta la incertidumbre como parte del viaje.",s:"Lost"},
+  {q:"La vida te pondrá obstáculos, pero los límites los pones tú.",s:"The Bear"},
+  {q:"El cambio es doloroso, pero nada es tan doloroso como quedarse donde no perteneces.",s:"BoJack Horseman"},
+  {q:"Aprende a fluir con el caos.",s:"The Dark Knight"},
+  {q:"La resiliencia implica adaptarse a las situaciones difíciles.",s:"Grey's Anatomy"},
+  {q:"No temas al cambio, abrázalo como una nueva aventura.",s:"A Place Further Than the Universe"},
+  {q:"La mente rígida se rompe, la mente flexible se adapta.",s:"Psycho-Pass"},
+  {q:"Cada final es un nuevo comienzo disfrazado.",s:"Dark"},
+  {q:"La reinvención personal es un superpoder.",s:"The Marvelous Mrs. Maisel"},
+  {q:"La adaptación requiere dejar ir lo viejo para recibir lo nuevo.",s:"Fruits Basket"},
+  {q:"No puedes detener las olas, pero puedes aprender a surfear.",s:"Billions"},
+  {q:"El cambio comienza en tu mente.",s:"Mob Psycho 100"},
+  // Días 331-365: Paz Mental y Maestría
+  {q:"La paz interior no se encuentra evitando los problemas, sino resolviéndolos dentro de ti.",s:"Kung Fu Panda 2"},
+  {q:"La verdadera maestría requiere tiempo, paciencia y un ego bajo control.",s:"Hajime no Ippo"},
+  {q:"El silencio interior es la fuente de todo gran poder.",s:"Mushishi"},
+  {q:"No necesitas demostrarle nada a nadie, solo a ti mismo.",s:"Brittany Runs a Marathon"},
+  {q:"La calma en medio de la tormenta es la mayor de las virtudes.",s:"Vinland Saga"},
+  {q:"El crecimiento personal es un proceso lento pero continuo.",s:"Silver Spoon"},
+  {q:"La paz mental es la verdadera riqueza.",s:"The Sopranos"},
+  {q:"La maestría de uno mismo es el mayor de los imperios.",s:"Gladiador"},
+  {q:"No dejes que los elogios te suban a la cabeza ni que las críticas te lleguen al corazón.",s:"Ted Lasso"},
+  {q:"El autoconocimiento es el principio de toda sabiduría.",s:"Hannibal"},
+  {q:"Encuentra la felicidad en las pequeñas cosas de la vida.",s:"My Neighbor Totoro"},
+  {q:"La mente tranquila disipa toda duda y miedo.",s:"Demon Slayer"},
+  {q:"El éxito sin paz interior es el mayor de los fracasos.",s:"Mad Men"},
+  {q:"Acepta tus sombras para poder brillar con más luz.",s:"Fullmetal Alchemist"},
+  {q:"La autorreflexión es dolorosa pero absolutamente liberadora.",s:"Mr. Robot"},
+  {q:"No busques la perfección, busca el progreso constante.",s:"Haikyuu!!"},
+  {q:"La verdadera fuerza es la que se usa para proteger, no para destruir.",s:"Rurouni Kenshin"},
+  {q:"Mantén tu corazón limpio en un mundo lleno de suciedad.",s:"Monster"},
+  {q:"La paz no es la ausencia de conflicto, sino la capacidad de manejarlo.",s:"The West Wing"},
+  {q:"La madurez es aceptar que no todas las preguntas tienen respuesta.",s:"Dark"},
+  {q:"La simplicidad es la máxima sofisticación.",s:"The Grand Budapest Hotel"},
+  {q:"Sé el faro en medio de la oscuridad de los demás.",s:"Violet Evergarden"},
+  {q:"La gratitud transforma lo que tenemos en suficiente.",s:"The Chosen"},
+  {q:"No te dejes arrastrar por el ruido del mundo; busca tu propio ritmo.",s:"Barakamon"},
+  {q:"La resiliencia interna es el escudo más fuerte.",s:"Vikings"},
+  {q:"Aprende a soltar lo que ya no te sirve para crecer.",s:"Anohana"},
+  {q:"La verdadera libertad es el dominio de la propia mente.",s:"The Matrix"},
+  {q:"Sé amable contigo mismo durante el proceso de cambio.",s:"Bojack Horseman"},
+  {q:"El equilibrio es la clave de una vida plena.",s:"Avatar: La Leyenda de Aang"},
+  {q:"Al final de todo, lo único que importa es quién elegiste ser hoy.",s:"The Good Place"},
+  {q:"El mañana es una página en blanco. Escríbela con determinación.",s:"Clannad"},
+  {q:"La vida es demasiado corta para desperdiciarla en el miedo y el arrepentimiento.",s:"One Punch Man"},
+  {q:"No importa cuán oscura sea la noche, el amanecer siempre llegará.",s:"Fairy Tail"},
+  {q:"Tu historia aún no ha terminado. El mejor capítulo está por escribirse.",s:"My Hero Academia"},
+  {q:"Cada día es una nueva oportunidad de ser mejor que ayer.",s:"HabitOS"},
+];
+
+/** Devuelve la frase del día basada en el día del año */
+function getDailyQuote(){
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 0);
+  const diff = now - start;
+  const oneDay = 1000 * 60 * 60 * 24;
+  const dayOfYear = Math.floor(diff / oneDay); // 1-365
+  const idx = (dayOfYear - 1) % DAILY_QUOTES.length;
+  return DAILY_QUOTES[idx >= 0 ? idx : 0];
+}
+
+/** Renderiza la frase en el dashboard */
+function renderDailyQuote(){
+  const q = getDailyQuote();
+  const el = document.getElementById('daily-quote-wrap');
+  if(!el) return;
+  el.innerHTML = `
+    <div style="background:linear-gradient(135deg,rgba(157,78,221,0.08),rgba(0,245,212,0.05));
+                border:1px solid rgba(157,78,221,0.18);border-radius:12px;
+                padding:12px 16px;display:flex;gap:12px;align-items:flex-start">
+      <div style="font-size:20px;flex-shrink:0;margin-top:1px">💬</div>
+      <div>
+        <div style="font-size:13px;color:var(--text1);line-height:1.6;font-style:italic">"${q.q}"</div>
+        <div style="font-size:11px;color:var(--purple);margin-top:4px;font-weight:600">— ${q.s}</div>
+      </div>
+    </div>`;
+}
+
+const EMOJIS=['💪','📚','🧘','💧','🏃','🥗','😴','💡','🎯','✍️','🎵','🌿','💰','🔥','⚡','🧠','🌅','🏋️','🚴','📖'];
+const COLORS=['#00f5d4','#9d4edd','#ff007f','#f5a623','#3b82f6','#10b981','#f97316','#8b5cf6','#ec4899','#06b6d4'];
+const CATS_EMOJI={Salud:'💚',Fitness:'💪',Estudio:'📚',Mentalidad:'🧘',Finanzas:'💰',Personal:'⭐'};
+
+// ── SOLO LEVELING — Sistema de rangos exponencial ─────────────────────────
+const SL_RANKS=[
+  {rank:'E',min:1,  max:9,   badge:'🪨',title:'El Peor Cazador de la Humanidad',  xpFormula: lvl => lvl * 100},
+  {rank:'D',min:10, max:24,  badge:'🗡️', title:'Repercutor del Destino',           xpFormula: lvl => lvl * 250},
+  {rank:'C',min:25, max:44,  badge:'💎',title:'Incursor de Mazmorras',              xpFormula: lvl => lvl * 500},
+  {rank:'B',min:45, max:69,  badge:'🛡️', title:'Líder de Escuadrón',               xpFormula: lvl => lvl * 1000},
+  {rank:'A',min:70, max:99,  badge:'👑',title:'Conquistador de Portales Rojos',    xpFormula: lvl => lvl * 2000},
+  {rank:'S',min:100,max:149, badge:'🌌',title:'Cazador de Rango S Supremo',        xpFormula: lvl => lvl * 4000},
+  {rank:'N',min:150,max:9999,badge:'✨',title:'Autoridad de la Nueva Era',         xpFormula: lvl => Infinity},
+];
+
+/** Devuelve el objeto de rango para un nivel dado */
+function getRankForLevel(lvl){
+  return SL_RANKS.find(r=>lvl>=r.min&&lvl<=r.max) || SL_RANKS[SL_RANKS.length-1];
+}
+
+/** XP requerida para pasar del nivel lvl al lvl+1 */
+function xpForNextLevel(lvl){
+  const r=getRankForLevel(lvl);
+  return r.xpFormula(lvl);
+}
+
+/**
+ * Dado el XP total acumulado, calcula el nivel actual y el XP
+ * gastado en el nivel actual.
+ */
+function computeLevel(totalXP){
+  let lvl=1, spent=0;
+  while(true){
+    const needed=xpForNextLevel(lvl);
+    if(needed===Infinity) return {lvl,spent:totalXP-spent};
+    if(totalXP-spent < needed) return {lvl, spent: totalXP-spent};
+    spent += needed;
+    lvl++;
+  }
+}
+
+let state={
+  habits:[],completions:{},journal:{},
+  xp:0,
+  // Cronómetro (solo runtime, no se persiste)
+  selectedEmoji:EMOJIS[0],selectedColor:COLORS[0],
+  calMonth:new Date().getMonth(),calYear:new Date().getFullYear(),
+  selectedHabitCal:null,currentFilter:'all',searchText:'',
+  // Penalización: última fecha en que hubo al menos 1 hábito completado
+  lastActiveDate: null
+};
+
+function load(){const s=localStorage.getItem('habitos_v3');if(s){try{const p=JSON.parse(s);Object.assign(state,p);}catch(e){}}}
+function save(){localStorage.setItem('habitos_v3',JSON.stringify({habits:state.habits,completions:state.completions,journal:state.journal,xp:state.xp,lastActiveDate:state.lastActiveDate,penalties:state.penalties||0,penaltyLog:state.penaltyLog||[]}));}
+function todayKey(){return new Date().toISOString().split('T')[0]}
+
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach((n,i)=>{const pages=['dashboard','habits','calendar','stats','journal','achievements','settings'];n.classList.toggle('active',pages[i]===id);});
+  document.querySelectorAll('.mobile-nav-item').forEach((n,i)=>{const pages=['dashboard','habits','calendar','stats','journal'];n.classList.toggle('active',pages[i]===id);});
+  if(id==='dashboard')renderDashboard();
+  if(id==='habits')renderHabits();
+  if(id==='calendar')renderCalendar();
+  if(id==='stats')renderStats();
+  if(id==='achievements')renderAchievements();
+  if(id==='journal')renderJournal();
+}
+
+function openModal(editId=null){
+  const m=document.getElementById('modal-overlay');
+  document.getElementById('modal-title').textContent=editId?'✏️ Editar Hábito':'✨ Nuevo Hábito';
+  document.getElementById('edit-id').value=editId||'';
+  if(editId){const h=state.habits.find(h=>h.id===editId);if(h){document.getElementById('h-name').value=h.name;document.getElementById('h-cat').value=h.cat;document.getElementById('h-priority').value=h.priority;document.getElementById('h-type').value=h.type||'positive';state.selectedEmoji=h.emoji;state.selectedColor=h.color;}}
+  else{document.getElementById('h-name').value='';state.selectedEmoji=EMOJIS[0];state.selectedColor=COLORS[0];}
+  renderEmojiPick();renderColorPick();
+  m.classList.add('open');
+  setTimeout(()=>document.getElementById('h-name').focus(),300);
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open')}
+function closeModalOut(e){if(e.target===document.getElementById('modal-overlay'))closeModal()}
+
+function renderEmojiPick(){document.getElementById('emoji-pick').innerHTML=EMOJIS.map(e=>`<div class="emoji-opt${e===state.selectedEmoji?' sel':''}" onclick="selectEmoji('${e}',this)">${e}</div>`).join('');}
+function renderColorPick(){document.getElementById('color-pick').innerHTML=COLORS.map(col=>`<div class="color-dot${col===state.selectedColor?' sel':''}" style="background:${col}" onclick="selectColor('${col}',this)"></div>`).join('');}
+function selectEmoji(e,el){state.selectedEmoji=e;document.querySelectorAll('.emoji-opt').forEach(x=>x.classList.remove('sel'));el.classList.add('sel')}
+function selectColor(c,el){state.selectedColor=c;document.querySelectorAll('.color-dot').forEach(x=>x.classList.remove('sel'));el.classList.add('sel')}
+
+function saveHabit(){
+  const name=document.getElementById('h-name').value.trim();
+  // Validación 1 – campo vacío
+  if(!name){showToast('⚠️ Escribe un nombre para el hábito','pink');return;}
+  // Validación 2 – longitud máxima (no rompe las tarjetas)
+  if(name.length>40){showToast('⚠️ Nombre demasiado largo (máx. 40 caracteres)','pink');return;}
+  // Validación 3 – duplicados (solo al crear, no al editar)
+  const editId=document.getElementById('edit-id').value;
+  const duplicado=state.habits.some(h=>h.name.toLowerCase()===name.toLowerCase()&&h.id!==editId);
+  if(duplicado){showToast('⚠️ Ya existe un hábito con ese nombre','amber');return;}
+  const h={id:editId||Date.now().toString(),name,cat:document.getElementById('h-cat').value,priority:document.getElementById('h-priority').value,type:document.getElementById('h-type').value,emoji:state.selectedEmoji,color:state.selectedColor,createdAt:editId?(state.habits.find(x=>x.id===editId)||{}).createdAt||Date.now():Date.now()};
+  if(editId){const i=state.habits.findIndex(x=>x.id===editId);if(i>=0)state.habits[i]=h;}
+  else state.habits.push(h);
+  save();closeModal();
+  if(document.getElementById('page-dashboard').classList.contains('active'))renderDashboard();
+  else renderHabits();
+  showToast(editId?'✏️ Hábito actualizado':'✨ Hábito creado','cyan');
+  gainXP(25);
+}
+
+function deleteHabit(id){
+  if(!confirm('¿Eliminar este hábito?'))return;
+  state.habits=state.habits.filter(h=>h.id!==id);
+  save();renderHabits();showToast('🗑️ Hábito eliminado','pink');
+}
+
+function toggleHabit(id){
+  const today=todayKey();
+  if(!state.completions[today])state.completions[today]={};
+  const was=state.completions[today][id];
+  state.completions[today][id]=!was;
+  save();
+  if(!was)gainXP(10);
+  renderDashboard();
+  if(!was)showToast('🎉 ¡Hábito completado!','cyan');
+}
+
+// ── Solo Leveling: ganar XP ─────────────────────────────────────────────────
+function gainXP(n){
+  state.xp += n;
+  // Actualiza la última fecha activa para el control de penalización
+  state.lastActiveDate = todayKey();
+  save();
+  updateXPDisplay();
+  checkAchievements();
+  checkPenalty();
+}
+
+// ── Penalización: -15% XP del nivel actual si 2+ días sin hábitos ───────────
+function checkPenalty(){
+  if(!state.lastActiveDate) return;
+  const last = new Date(state.lastActiveDate);
+  const today = new Date(todayKey());
+  const diffDays = Math.floor((today - last) / 86400000);
+  if(diffDays >= 2){
+    const {lvl, spent} = computeLevel(state.xp);
+    const needed = xpForNextLevel(lvl);
+    const penalty = needed === Infinity ? 0 : Math.floor(spent * 0.15);
+    if(penalty > 0){
+      state.xp = Math.max(0, state.xp - penalty);
+      state.penalties = (state.penalties||0) + 1;
+      if(!state.penaltyLog) state.penaltyLog = [];
+      state.penaltyLog.push({
+        date: todayKey(),
+        amount: penalty,
+        reason: `${diffDays} días sin completar hábitos`,
+      });
+      save();
+      updateXPDisplay();
+      showToast(`⚠️ EL SISTEMA ACTÚA — Penalización: -${penalty.toLocaleString()} XP (${diffDays} días inactivo)`,'pink');
+      const bar = document.getElementById('xp-bar');
+      if(bar){ bar.classList.add('system-penalty'); setTimeout(()=>bar.classList.remove('system-penalty'), 2000); }
+    }
+  }
+}
+
+// ── Solo Leveling: renderizar UI de XP y Rango ──────────────────────────────
+function updateXPDisplay(){
+  const {lvl, spent} = computeLevel(state.xp);
+  const rank = getRankForLevel(lvl);
+  const needed = xpForNextLevel(lvl);
+  const pct = needed === Infinity ? 100 : Math.min(100, Math.round(spent / needed * 100));
+  const nxtXP = needed === Infinity ? '∞' : needed.toLocaleString();
+
+  // Barra XP
+  document.getElementById('xp-bar').style.width = pct + '%';
+  // Colorear la barra según rango
+  const rankColors = {E:'#aaa',D:'#6bc46b',C:'#64a0dc',B:'#b464dc',A:'#f5a623',S:'#00f5d4',N:'#ffffff'};
+  document.getElementById('xp-bar').style.background =
+    `linear-gradient(90deg, ${rankColors[rank.rank]||'var(--cyan)'}, var(--purple))`;
+
+  // Labels
+  document.getElementById('xp-label').textContent =
+    spent.toLocaleString() + ' / ' + nxtXP + ' XP';
+  document.getElementById('level-num').textContent = lvl;
+  document.getElementById('level-name').textContent =
+    `[Rango ${rank.rank}] ${rank.title}`;
+  document.getElementById('stat-xp').textContent = state.xp.toLocaleString();
+
+  // Badge en el sidebar
+  const levelBadgeEl = document.querySelector('.level-badge');
+  if(levelBadgeEl){
+    levelBadgeEl.innerHTML =
+      `${rank.badge} Nv <span id="level-num">${lvl}</span> — ` +
+      `<span id="level-name" class="rank-${rank.rank}">[Rango ${rank.rank}] ${rank.title}</span>`;
+  }
+}
+
+function getStreak(habitId){let streak=0;const d=new Date();for(let i=0;i<365;i++){const k=d.toISOString().split('T')[0];if(state.completions[k]&&state.completions[k][habitId])streak++;else if(i>0)break;d.setDate(d.getDate()-1);}return streak;}
+function getBestStreak(habitId){let best=0,cur=0;const dates=Object.keys(state.completions).sort();for(const d of dates){if(state.completions[d][habitId]){cur++;best=Math.max(best,cur);}else cur=0;}return best;}
+
+function renderDashboard(){
+  const today=todayKey();const done=(state.completions[today]||{});
+  const total=state.habits.length;const doneCount=state.habits.filter(h=>done[h.id]).length;
+  const pend=total-doneCount;const pct=total?Math.round(doneCount/total*100):0;
+  document.getElementById('stat-done').textContent=doneCount;
+  document.getElementById('stat-pending').textContent=pend;
+  document.getElementById('badge-today').textContent=pend;
+  document.getElementById('ring-pct').textContent=pct+'%';
+  document.getElementById('ring-sub').textContent=doneCount+' de '+total+' hábitos';
+  const circ=2*Math.PI*32;const offset=circ-(pct/100)*circ;
+  document.getElementById('progress-ring').style.strokeDashoffset=offset;
+  const bestStreak=state.habits.reduce((b,h)=>Math.max(b,getStreak(h.id)),0);
+  document.getElementById('stat-streak').textContent=bestStreak+'🔥';
+  const d=new Date();
+  // Saludo dinámico por hora del día
+  const hr=d.getHours();
+  const greet=hr<12?'Buenos días ☀️':hr<18?'Buenas tardes 🌤':'Buenas noches 🌙';
+  const greetEl=document.getElementById('dashboard-greeting');
+  if(greetEl) greetEl.textContent=greet;
+  document.getElementById('dashboard-date').textContent=d.toLocaleDateString('es-ES',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  renderDailyQuote();
+  const todayNames=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];const todayIdx=d.getDay();
+  let wkBars='',wkLabels='';
+  for(let i=6;i>=0;i--){
+    const dd=new Date(d);dd.setDate(d.getDate()-i);
+    const k=dd.toISOString().split('T')[0];const comp=state.completions[k]||{};
+    const cnt=state.habits.filter(h=>comp[h.id]).length;const pctW=total?Math.round(cnt/total*100):0;
+    const isToday=i===0;
+    wkBars+=`<div class="bar-wrap"><div class="bar ${cnt>0?'filled':'empty'}" style="height:${Math.max(4,pctW*0.7)}px;${isToday?'box-shadow:0 0 12px rgba(0,245,212,0.5)':''}"></div></div>`;
+    wkLabels+=`<div style="font-size:10px;color:${isToday?'var(--cyan)':'var(--text3)'};">${todayNames[(todayIdx-i+7)%7]}</div>`;
+  }
+  document.getElementById('week-bars').innerHTML=wkBars;
+  document.getElementById('week-labels').innerHTML=wkLabels;
+  const listEl=document.getElementById('today-habits-list');
+  if(!state.habits.length){listEl.innerHTML=`<div class="empty"><div class="empty-icon">⚡</div><div class="empty-title">Sin hábitos todavía</div><div class="empty-sub">Crea tu primer hábito</div><button class="btn btn-primary" onclick="openModal()">＋ Crear hábito</button></div>`;return;}
+  listEl.innerHTML=state.habits.slice(0,6).map(h=>{const isDone=done[h.id];const streak=getStreak(h.id);return`<div class="habit-item${isDone?' done':''}" onclick="toggleHabit('${h.id}')"><div class="habit-check" style="${isDone?'':'border-color:'+h.color+'40'}">${isDone?'✓':''}</div><div class="habit-emoji">${h.emoji}</div><div class="habit-info"><div class="habit-name">${h.name}</div><div class="habit-cat"><span class="tag ${h.type==='negative'?'pink':'cyan'}">${h.cat}</span></div></div>${streak>1?`<div class="habit-streak"><span class="streak-fire">🔥</span>${streak}</div>`:''}</div>`;}).join('');
+  const insight=document.getElementById('insight-wrap');
+  if(pct>=80)insight.innerHTML=`<div class="insight"><div class="insight-icon">🚀</div><div class="insight-text"><strong>¡Increíble ritmo!</strong> Llevas ${pct}% completado hoy. Estás en racha.</div></div>`;
+  else if(pct>=40)insight.innerHTML=`<div class="insight"><div class="insight-icon">💡</div><div class="insight-text">Buen comienzo. Te faltan <strong>${pend} hábitos</strong> para completar el día.</div></div>`;
+  else insight.innerHTML=`<div class="insight"><div class="insight-icon">⚡</div><div class="insight-text">Un nuevo día, nuevas oportunidades. <strong>¡Comienza tu rutina!</strong></div></div>`;
+  updateXPDisplay();
+}
+
+function renderHabits(){
+  const listEl=document.getElementById('habits-list');
+  const today=todayKey();const done=state.completions[today]||{};
+  let filtered=state.habits.filter(h=>{const matchCat=state.currentFilter==='all'||h.cat===state.currentFilter;const matchSearch=!state.searchText||h.name.toLowerCase().includes(state.searchText.toLowerCase());return matchCat&&matchSearch;});
+  if(!filtered.length){listEl.innerHTML=`<div class="empty"><div class="empty-icon">⚡</div><div class="empty-title">Sin hábitos${state.currentFilter!=='all'?' en esta categoría':''}</div><div class="empty-sub">¡Empieza tu rutina hoy!</div><button class="btn btn-primary" onclick="openModal()">＋ Crear hábito</button></div>`;return;}
+  listEl.innerHTML=filtered.map(h=>{const isDone=done[h.id];const streak=getStreak(h.id);return`<div class="habit-item${isDone?' done':''}" style="border-left:3px solid ${h.color}40"><div class="habit-check" onclick="event.stopPropagation();toggleHabit('${h.id}')" style="${isDone?'background:'+h.color+'20;border-color:'+h.color:'border-color:'+h.color+'60'}">${isDone?'✓':''}</div><div class="habit-emoji">${h.emoji}</div><div class="habit-info"><div class="habit-name" style="color:${isDone?'var(--text3)':h.type==='negative'?'var(--pink)':'var(--text1)'}">${h.name}</div><div style="display:flex;gap:6px;margin-top:3px"><span class="tag ${h.priority==='Alta'?'pink':h.priority==='Media'?'amber':'cyan'}" style="font-size:10px">${h.priority}</span><span class="tag purple" style="font-size:10px">${h.cat}</span>${h.type==='negative'?'<span class="tag pink" style="font-size:10px">Evitar</span>':''}</div></div>${streak>0?`<div class="habit-streak"><span class="streak-fire">🔥</span>${streak}</div>`:''}<div class="habit-actions"><button class="habit-btn" onclick="event.stopPropagation();openModal('${h.id}')">✏️</button><button class="habit-btn del" onclick="event.stopPropagation();deleteHabit('${h.id}')">🗑️</button></div></div>`;}).join('');
+}
+
+function filterHabits(){state.searchText=document.getElementById('search-input').value;renderHabits()}
+function setFilter(f,el){state.currentFilter=f;document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');renderHabits()}
+
+function renderCalendar(){
+  const months=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('cal-month-label').textContent=months[state.calMonth]+' '+state.calYear;
+  const sel=document.getElementById('cal-habit-select');
+  sel.innerHTML=state.habits.map(h=>`<div class="filter-chip${state.selectedHabitCal===h.id?' active':''}" onclick="selectCalHabit('${h.id}')">${h.emoji} ${h.name}</div>`).join('');
+  const grid=document.getElementById('cal-grid');
+  const days=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  let html=days.map(d=>`<div class="cal-day-name">${d}</div>`).join('');
+  const firstDay=new Date(state.calYear,state.calMonth,1).getDay();
+  const daysInMonth=new Date(state.calYear,state.calMonth+1,0).getDate();
+  for(let i=0;i<firstDay;i++)html+=`<div class="cal-day other-month"></div>`;
+  const today=new Date();
+  for(let day=1;day<=daysInMonth;day++){
+    const dateKey=`${state.calYear}-${String(state.calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const isToday=today.getDate()===day&&today.getMonth()===state.calMonth&&today.getFullYear()===state.calYear;
+    let isDone=false;
+    if(state.selectedHabitCal&&state.completions[dateKey])isDone=!!state.completions[dateKey][state.selectedHabitCal];
+    html+=`<div class="cal-day${isToday?' today':''}${isDone?' done':''}" onclick="toggleCalDay('${dateKey}')">${day}</div>`;
+  }
+  grid.innerHTML=html;
+  renderHeatmap();
+}
+function selectCalHabit(id){state.selectedHabitCal=state.selectedHabitCal===id?null:id;renderCalendar()}
+function changeMonth(dir){state.calMonth+=dir;if(state.calMonth>11){state.calMonth=0;state.calYear++;}if(state.calMonth<0){state.calMonth=11;state.calYear--;}renderCalendar();}
+function toggleCalDay(dateKey){if(!state.selectedHabitCal){showToast('💡 Selecciona un hábito primero','purple');return;}if(!state.completions[dateKey])state.completions[dateKey]={};state.completions[dateKey][state.selectedHabitCal]=!state.completions[dateKey][state.selectedHabitCal];save();renderCalendar();}
+
+function renderHeatmap(){
+  const grid=document.getElementById('heatmap');const cells=[];const today=new Date();
+  for(let i=363;i>=0;i--){const d=new Date(today);d.setDate(today.getDate()-i);const k=d.toISOString().split('T')[0];const comp=state.completions[k]||{};const cnt=Object.values(comp).filter(Boolean).length;const intensity=cnt===0?0:cnt<=1?1:cnt<=3?2:cnt<=5?3:4;cells.push(`<div class="hm-cell hm-${intensity}" title="${k}: ${cnt} hábitos"></div>`);}
+  grid.innerHTML=cells.join('');
+}
+
+function renderStats(){
+  document.getElementById('active-habits').textContent=state.habits.length;
+  const allDays=Object.keys(state.completions);
+  let perfect=0,totalComp=0,total=0;
+  for(const day of allDays){const comp=state.completions[day];const cnt=state.habits.filter(h=>comp[h.id]).length;if(state.habits.length&&cnt===state.habits.length)perfect++;totalComp+=cnt;total+=state.habits.length;}
+  document.getElementById('perfect-days').textContent=perfect;
+  document.getElementById('success-rate').textContent=total?Math.round(totalComp/total*100)+'%':'0%';
+  const cats=[...new Set(state.habits.map(h=>h.cat))];
+  document.getElementById('cat-stats').innerHTML=cats.map(cat=>{const catH=state.habits.filter(h=>h.cat===cat);const emoji=CATS_EMOJI[cat]||'⭐';let doneInCat=0,possibleInCat=0;for(const day of allDays){const comp=state.completions[day]||{};doneInCat+=catH.filter(h=>comp[h.id]).length;possibleInCat+=catH.length;}const pct=possibleInCat?Math.round(doneInCat/possibleInCat*100):0;return`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px"><span>${emoji} ${cat}</span><span style="color:var(--cyan)">${pct}%</span></div><div style="height:6px;background:var(--bg3);border-radius:4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--cyan),var(--purple));border-radius:4px;transition:width 0.5s"></div></div></div>`;}).join('');
+  document.getElementById('habit-stats-list').innerHTML=state.habits.map(h=>{const streak=getStreak(h.id);const best=getBestStreak(h.id);let doneH=0,possH=0;for(const day of allDays){const c=state.completions[day]||{};if(c[h.id])doneH++;possH++;}const pct=possH?Math.round(doneH/possH*100):0;return`<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--glass-border)"><div style="font-size:22px">${h.emoji}</div><div style="flex:1"><div style="font-size:13px;font-weight:600;margin-bottom:2px">${h.name}</div><div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-top:4px"><div style="height:100%;width:${pct}%;background:${h.color};border-radius:2px"></div></div></div><div style="text-align:right;font-size:11px;color:var(--text2)"><div style="color:${h.color};font-weight:700">${pct}%</div><div>🔥 ${streak} días</div></div></div>`;}).join('');
+}
+
+function renderJournal(){
+  const today=todayKey();const d=new Date();
+  document.getElementById('journal-date').textContent=d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+  const entry=state.journal[today]||{};
+  const energyRow=document.getElementById('energy-row');energyRow.innerHTML='';
+  for(let i=1;i<=10;i++){const dot=document.createElement('div');dot.className='energy-dot'+(entry.energy>=i?' lit':'');dot.onclick=()=>setEnergy(i);energyRow.appendChild(dot);}
+  if(entry.mood)document.querySelectorAll('.mood-btn').forEach(b=>{b.classList.toggle('sel',b.textContent===entry.mood)});
+  document.getElementById('journal-notes').value=entry.notes||'';
+  const entries=Object.entries(state.journal).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,7);
+  document.getElementById('journal-history').innerHTML=entries.map(([date,e])=>`<div style="padding:12px 0;border-bottom:1px solid var(--glass-border)"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;color:var(--text3)">${date}</span><span style="font-size:16px">${e.mood||''}</span></div>${e.notes?`<div style="font-size:13px;color:var(--text2);line-height:1.5">${e.notes.substring(0,100)}${e.notes.length>100?'...':''}</div>`:''}${e.energy?`<div style="display:flex;gap:3px;margin-top:6px">${Array.from({length:10},(_,i)=>`<div style="width:14px;height:4px;border-radius:2px;background:${e.energy>i?'var(--amber)':'var(--bg3)'}"></div>`).join('')}</div>`:''}</div>`).join('');
+}
+function setMood(mood,el){const today=todayKey();if(!state.journal[today])state.journal[today]={};state.journal[today].mood=mood;save();document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');}
+function setEnergy(n){const today=todayKey();if(!state.journal[today])state.journal[today]={};state.journal[today].energy=n;save();document.querySelectorAll('.energy-dot').forEach((d,i)=>d.classList.toggle('lit',i<n));}
+function saveJournal(){const today=todayKey();if(!state.journal[today])state.journal[today]={};state.journal[today].notes=document.getElementById('journal-notes').value;save();showToast('📝 Entrada guardada','cyan');renderJournal();}
+function loadJournal(){renderJournal();showToast('📖 Cargado','purple')}
+
+// ── ACHIEVEMENTS: render completo con Rangos, Penalizaciones e Insignias ─────
+function renderAchievements(){
+  const {lvl, spent} = computeLevel(state.xp);
+  const rank = getRankForLevel(lvl);
+  const needed = xpForNextLevel(lvl);
+  const pct = needed === Infinity ? 100 : Math.min(100, Math.round(spent/needed*100));
+
+  // Stat cards
+  document.getElementById('ach-xp').textContent = state.xp.toLocaleString();
+  document.getElementById('ach-level').textContent = lvl;
+  document.getElementById('ach-level-name').textContent = `[Rango ${rank.rank}]`;
+  document.getElementById('ach-penalties').textContent = state.penalties||0;
+
+  // ── Rank progress card ────────────────────────────────────────────────────
+  const rankColors={E:'#aaa',D:'#6bc46b',C:'#64a0dc',B:'#b464dc',A:'#f5a623',S:'#00f5d4',N:'#ffffff'};
+  const rc = rankColors[rank.rank]||'var(--cyan)';
+  const nextRank = SL_RANKS.find(r=>r.min>lvl);
+  const lvlsToNext = nextRank ? nextRank.min - lvl : 0;
+  document.getElementById('rank-progress-card').innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap">
+      <div style="width:56px;height:56px;border-radius:14px;background:rgba(${rc==='#aaa'?'170,170,170':rc==='#6bc46b'?'107,196,107':rc==='#64a0dc'?'100,160,220':rc==='#b464dc'?'180,100,220':rc==='#f5a623'?'245,166,35':rc==='#00f5d4'?'0,245,212':'255,255,255'},0.12);
+                border:1px solid ${rc}40;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0">
+        ${rank.badge}
+      </div>
+      <div style="flex:1;min-width:180px">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:2px">Rango actual</div>
+        <div style="font-size:18px;font-weight:700;color:${rc}">[Rango ${rank.rank}] ${rank.title}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">Nivel ${lvl}${nextRank?` · Faltan ${lvlsToNext} niveles para Rango ${nextRank.rank}`:' · ¡Nivel máximo!'}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:22px;font-weight:700;color:${rc}">${pct}%</div>
+        <div style="font-size:11px;color:var(--text3)">${spent.toLocaleString()} / ${needed===Infinity?'∞':needed.toLocaleString()} XP</div>
+      </div>
+    </div>
+    <div style="height:8px;background:var(--bg3);border-radius:4px;overflow:hidden">
+      <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,${rc},var(--purple));border-radius:4px;transition:width .6s ease;box-shadow:0 0 10px ${rc}60"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--text3)">
+      <span>Nv ${lvl}</span>
+      <span>${needed===Infinity?'Nivel Nacional alcanzado':`${(needed-spent).toLocaleString()} XP para Nv ${lvl+1}`}</span>
+    </div>`;
+
+  // ── Rank Roadmap ──────────────────────────────────────────────────────────
+  const roadmapEl = document.getElementById('rank-roadmap');
+  roadmapEl.innerHTML = SL_RANKS.map(r=>{
+    const isCurrentRank = lvl>=r.min && lvl<=r.max;
+    const isPastRank = lvl>r.max;
+    const rc2 = rankColors[r.rank]||'#fff';
+    const xpAtEntry = (()=>{ let x=0,l=1; while(l<r.min){ x+=xpForNextLevel(l); l++; } return x; })();
+    return `<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;margin-bottom:6px;
+                        background:${isCurrentRank?`rgba(${rc2==='#aaa'?'170,170,170':rc2==='#6bc46b'?'107,196,107':rc2==='#64a0dc'?'100,160,220':rc2==='#b464dc'?'180,100,220':rc2==='#f5a623'?'245,166,35':rc2==='#00f5d4'?'0,245,212':'255,255,255'},0.08)`:'var(--glass)'};
+                        border:1px solid ${isCurrentRank?rc2+'50':'var(--glass-border)'};
+                        opacity:${isPastRank?'0.5':'1'}">
+      <div style="font-size:24px;width:36px;text-align:center">${r.badge}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700;color:${rc2}">Rango ${r.rank}${isCurrentRank?' ← Aquí estás':''}</div>
+        <div style="font-size:12px;color:var(--text2)">${r.title}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">Niveles ${r.min}–${r.max===9999?'150+':r.max} · XP/nv: ${r.max===9999?'∞':r.xpFormula(r.min).toLocaleString()+'–'+r.xpFormula(r.max).toLocaleString()}</div>
+      </div>
+      ${isPastRank?'<div style="font-size:16px">✅</div>':isCurrentRank?`<div style="font-size:11px;color:${rc2};font-weight:700;text-align:right">EN<br>CURSO</div>`:'<div style="font-size:16px;opacity:.3">🔒</div>'}
+    </div>`;
+  }).join('');
+
+  // ── Penalty history ───────────────────────────────────────────────────────
+  const penEl = document.getElementById('penalty-history');
+  const penLog = state.penaltyLog||[];
+  if(!penLog.length){
+    penEl.innerHTML=`<div style="text-align:center;padding:20px;font-size:13px;color:var(--text3)">✅ Sin penalizaciones — ¡Sigue así!</div>`;
+  } else {
+    penEl.innerHTML = penLog.slice().reverse().map(p=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--glass-border)">
+        <div style="font-size:20px">⚠️</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600;color:var(--pink)">-${p.amount.toLocaleString()} XP</div>
+          <div style="font-size:12px;color:var(--text2)">${p.reason}</div>
+        </div>
+        <div style="font-size:11px;color:var(--text3)">${p.date}</div>
+      </div>`).join('');
+  }
+
+  // ── Achievements list ─────────────────────────────────────────────────────
+  const maxStreak = state.habits.reduce((b,h)=>Math.max(b,getStreak(h.id)),0);
+  const totalDays = Object.keys(state.completions).length;
+  const perfectDay = Object.values(state.completions).some(day=>state.habits.length>0&&state.habits.every(h=>day[h.id]));
+  const totalHabitsCompleted = Object.values(state.completions).reduce((sum,day)=>sum+Object.values(day).filter(Boolean).length,0);
+
+  const achievements=[
+    // Primeros pasos
+    {id:'first',    cat:'🌱 Primeros Pasos',title:'Primer Paso',       desc:'Crea tu primer hábito',                          req:'1 hábito creado',             icon:'⭐',type:'cyan',  xpR:50,  unlocked:state.habits.length>=1},
+    {id:'habits3',  cat:'🌱 Primeros Pasos',title:'Trío Imparable',    desc:'Crea 3 hábitos distintos',                       req:'3 hábitos creados',           icon:'🎯',type:'cyan',  xpR:75,  unlocked:state.habits.length>=3},
+    {id:'habits5',  cat:'🌱 Primeros Pasos',title:'Arsenal Completo',  desc:'Crea 5 hábitos — el sistema está contigo',       req:'5 hábitos creados',           icon:'⚡',type:'purple',xpR:150, unlocked:state.habits.length>=5},
+    {id:'habits10', cat:'🌱 Primeros Pasos',title:'Constructor de Vida',desc:'10 hábitos en seguimiento',                     req:'10 hábitos creados',          icon:'🏗️',type:'purple',xpR:300, unlocked:state.habits.length>=10},
+    // Rachas
+    {id:'streak3',  cat:'🔥 Rachas',        title:'Chispa Inicial',    desc:'3 días seguidos completando un hábito',          req:'Racha de 3 días',             icon:'🔥',type:'cyan',  xpR:50,  unlocked:maxStreak>=3},
+    {id:'streak7',  cat:'🔥 Rachas',        title:'7 Días Seguidos',   desc:'Una semana sin fallar — el hábito se instala',   req:'Racha de 7 días',             icon:'📅',type:'gold',  xpR:200, unlocked:maxStreak>=7},
+    {id:'streak14', cat:'🔥 Rachas',        title:'Dos Semanas Sólido',desc:'14 días consecutivos — la disciplina es real',   req:'Racha de 14 días',            icon:'💪',type:'gold',  xpR:400, unlocked:maxStreak>=14},
+    {id:'streak30', cat:'🔥 Rachas',        title:'Modo Disciplina',   desc:'30 días seguidos — el Sistema te reconoce',      req:'Racha de 30 días',            icon:'💎',type:'gold',  xpR:1000,unlocked:maxStreak>=30},
+    {id:'streak60', cat:'🔥 Rachas',        title:'Cazador Constante', desc:'60 días de racha — leyenda en construcción',     req:'Racha de 60 días',            icon:'🌌',type:'S',     xpR:2500,unlocked:maxStreak>=60},
+    {id:'streak100',cat:'🔥 Rachas',        title:'Centurión',         desc:'100 días sin parar — eres un cazador de rango S', req:'Racha de 100 días',           icon:'👑',type:'S',     xpR:5000,unlocked:maxStreak>=100},
+    // Completions
+    {id:'done10',   cat:'✅ Completados',   title:'Arrancando Motores',desc:'Completa 10 hábitos en total',                   req:'10 completados',              icon:'🚀',type:'cyan',  xpR:50,  unlocked:totalHabitsCompleted>=10},
+    {id:'done50',   cat:'✅ Completados',   title:'Medio Centenar',    desc:'50 hábitos completados — el ritmo se siente',    req:'50 completados',              icon:'🎖️',type:'cyan',  xpR:150, unlocked:totalHabitsCompleted>=50},
+    {id:'done100',  cat:'✅ Completados',   title:'El Centenario',     desc:'100 hábitos completados — puro esfuerzo',        req:'100 completados',             icon:'🏅',type:'purple',xpR:300, unlocked:totalHabitsCompleted>=100},
+    {id:'done500',  cat:'✅ Completados',   title:'Máquina Imparable', desc:'500 hábitos completados — eres de otro nivel',   req:'500 completados',             icon:'⚔️',type:'gold',  xpR:1000,unlocked:totalHabitsCompleted>=500},
+    {id:'perfect',  cat:'✅ Completados',   title:'Día Perfecto',      desc:'Completa el 100% de tus hábitos en un día',      req:'Un día con todos completados',icon:'🏆',type:'gold',  xpR:100, unlocked:perfectDay},
+    // XP / Rangos
+    {id:'xp500',    cat:'⭐ XP & Rango',   title:'Aprendiz del Sistema',desc:'Acumula 500 XP — el Sistema te observa',       req:'500 XP',                      icon:'🪨',type:'cyan',  xpR:0,   unlocked:state.xp>=500},
+    {id:'xp1000',   cat:'⭐ XP & Rango',   title:'Mil XP',            desc:'1,000 XP — llegas a Rango D',                    req:'1,000 XP',                    icon:'🗡️',type:'purple',xpR:0,   unlocked:state.xp>=1000},
+    {id:'xp5000',   cat:'⭐ XP & Rango',   title:'Incursor',          desc:'5,000 XP — el poder empieza a notarse',          req:'5,000 XP',                    icon:'💎',type:'gold',  xpR:0,   unlocked:state.xp>=5000},
+    {id:'xp20000',  cat:'⭐ XP & Rango',   title:'Líder de Escuadrón',desc:'20,000 XP — llegaste a Rango B',                 req:'20,000 XP',                   icon:'🛡️',type:'S',     xpR:0,   unlocked:state.xp>=20000},
+    {id:'rankS',    cat:'⭐ XP & Rango',   title:'Cazador de Rango S','desc':'Alcanzar Rango S (Nivel 100)',                   req:'Nivel 100',                   icon:'🌌',type:'S',     xpR:0,   unlocked:lvl>=100},
+    // Días de uso
+    {id:'days7',    cat:'📅 Constancia',    title:'Una Semana Real',   desc:'7 días distintos usando HabitOS',                req:'7 días de uso',               icon:'🗓️',type:'cyan',  xpR:100, unlocked:totalDays>=7},
+    {id:'days30',   cat:'📅 Constancia',    title:'Veterano',          desc:'30 días de uso — HabitOS ya es parte de ti',     req:'30 días de uso',              icon:'🌟',type:'purple',xpR:300, unlocked:totalDays>=30},
+    {id:'days90',   cat:'📅 Constancia',    title:'Tres Meses Sólido', desc:'90 días usando la app — hábito de por vida',     req:'90 días de uso',              icon:'💫',type:'gold',  xpR:500, unlocked:totalDays>=90},
+    {id:'days365',  cat:'📅 Constancia',    title:'Un Año de Poder',   desc:'365 días — eres la Autoridad de la Nueva Era',   req:'365 días de uso',             icon:'✨',type:'S',     xpR:5000,unlocked:totalDays>=365},
+    // Journal
+    {id:'journal1', cat:'📝 Journal',       title:'Primera Entrada',   desc:'Escribe tu primera entrada en el diario',        req:'1 entrada',                   icon:'✍️',type:'cyan',  xpR:25,  unlocked:Object.keys(state.journal).length>=1},
+    {id:'journal7', cat:'📝 Journal',       title:'Escritor',          desc:'7 entradas en el diario',                        req:'7 entradas',                  icon:'📝',type:'purple',xpR:100, unlocked:Object.keys(state.journal).length>=7},
+    {id:'journal30',cat:'📝 Journal',       title:'Cronista del Alma',  desc:'30 entradas de diario — reflexión como hábito', req:'30 entradas',                 icon:'📖',type:'gold',  xpR:300, unlocked:Object.keys(state.journal).length>=30},
+    // Penalizaciones
+    {id:'nopen',    cat:'🛡️ Sin Penalizar', title:'Sistema Satisfecho','desc':'Nunca recibir una penalización',               req:'0 penalizaciones',            icon:'🛡️',type:'gold',  xpR:500, unlocked:(state.penalties||0)===0&&totalDays>=7},
+  ];
+
+  // Group by category
+  const cats = [...new Set(achievements.map(a=>a.cat))];
+  const unlockedCount = achievements.filter(a=>a.unlocked).length;
+  document.getElementById('ach-unlocked').textContent = unlockedCount;
+
+  document.getElementById('achievements-list').innerHTML = cats.map(cat=>{
+    const catAchs = achievements.filter(a=>a.cat===cat);
+    const catUnlocked = catAchs.filter(a=>a.unlocked).length;
+    return `
+      <div style="margin-bottom:20px">
+        <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;font-weight:600;
+                    margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+          <span>${cat}</span>
+          <span style="color:var(--cyan)">${catUnlocked}/${catAchs.length}</span>
+        </div>
+        ${catAchs.map(a=>`
+          <div class="achievement" style="${a.unlocked?'border-color:rgba(255,255,255,0.1)':'opacity:0.65'}">
+            <div class="ach-icon ${a.unlocked?a.type:'locked'}" style="${a.type==='S'&&a.unlocked?'background:linear-gradient(135deg,rgba(0,245,212,0.2),rgba(157,78,221,0.2));box-shadow:0 0 20px rgba(0,245,212,0.3)':''}">
+              ${a.icon}
+            </div>
+            <div class="ach-info" style="flex:1">
+              <div class="ach-title" style="color:${a.unlocked?'var(--text1)':'var(--text3)'};display:flex;align-items:center;gap:6px">
+                ${a.title}
+                ${a.unlocked?'<span style="font-size:10px;background:rgba(0,245,212,0.1);color:var(--cyan);border:1px solid rgba(0,245,212,0.2);border-radius:4px;padding:1px 6px">✓ Desbloqueado</span>':''}
+              </div>
+              <div class="ach-sub">${a.desc}</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:3px">📋 Requisito: ${a.req}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              ${a.unlocked && a.xpR>0
+                ? `<div class="ach-xp">+${a.xpR.toLocaleString()} XP</div>`
+                : a.unlocked && a.xpR===0
+                  ? '<div style="font-size:11px;color:var(--text3)">Sin XP extra</div>'
+                  : `<div style="font-size:11px;color:var(--text3)">🔒 ${a.req}</div>`}
+            </div>
+          </div>`).join('')}
+      </div>`;
+  }).join('');
+}
+
+function checkAchievements(){
+  const maxStreak=state.habits.reduce((b,h)=>Math.max(b,getStreak(h.id)),0);
+  const milestones=[
+    [3,'🔥 Logro: ¡3 días seguidos!','amber'],
+    [7,'🔥 Logro: ¡7 días seguidos!','amber'],
+    [14,'💪 Logro: ¡14 días de racha!','purple'],
+    [30,'💎 ÉPICO: ¡30 días en racha — Modo Disciplina!','cyan'],
+    [60,'🌌 LEGENDARIO: ¡60 días de racha!','cyan'],
+    [100,'👑 NACIONAL: ¡100 días — Eres un Cazador de Rango S!','cyan'],
+  ];
+  milestones.forEach(([days,msg,color])=>{ if(maxStreak===days) showToast(msg,color); });
+  const xpMilestones=[[500,'🪨 Rango D desbloqueado — Repercutor del Destino','purple'],[1000,'🗡️ ¡1,000 XP alcanzados!','purple'],[5000,'💎 ¡5,000 XP — Incursor de Mazmorras!','cyan'],[20000,'🛡️ ¡20,000 XP — Líder de Escuadrón!','cyan']];
+  xpMilestones.forEach(([threshold,msg,color])=>{ if(state.xp>=threshold&&state.xp<threshold+50) showToast(msg,color); });
+}
+
+function setTheme(t,el){
+  document.querySelectorAll('.theme-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');
+  const themes={neon:{bg0:'#0d0f12',bg1:'#121214',cyan:'#00f5d4',purple:'#9d4edd'},cyber:{bg0:'#050a1a',bg1:'#0a1428',cyan:'#00bfff',purple:'#0066ff'},midnight:{bg0:'#0a0e1a',bg1:'#0f1525',cyan:'#818cf8',purple:'#6366f1'},amoled:{bg0:'#000000',bg1:'#0a0a0a',cyan:'#00f5d4',purple:'#9d4edd'}};
+  const th=themes[t];
+  document.documentElement.style.setProperty('--bg0',th.bg0);document.documentElement.style.setProperty('--bg1',th.bg1);document.documentElement.style.setProperty('--cyan',th.cyan);document.documentElement.style.setProperty('--purple',th.purple);
+  showToast('🎨 Tema aplicado','purple');
+}
+
+function exportJSON(){const blob=new Blob([JSON.stringify({habits:state.habits,completions:state.completions,journal:state.journal,xp:state.xp},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='habitos_backup.json';a.click();showToast('📦 JSON exportado','cyan');}
+function exportCSV(){const rows=[['Hábito','Categoría','Prioridad','Racha Actual','Mejor Racha']];state.habits.forEach(h=>rows.push([h.name,h.cat,h.priority,getStreak(h.id),getBestStreak(h.id)]));const csv=rows.map(r=>r.join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='habitos.csv';a.click();showToast('📊 CSV exportado','cyan');}
+// ── Reinicio inteligente: borra solo el mes actual, conserva hábitos ────────
+function resetAll(){
+  if(!confirm('¿Reiniciar el progreso del MES ACTUAL? Tus hábitos se conservarán.')){return;}
+  const now = new Date();
+  const prefix = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  Object.keys(state.completions).forEach(fecha=>{if(fecha.startsWith(prefix))delete state.completions[fecha];});
+  Object.keys(state.journal).forEach(fecha=>{if(fecha.startsWith(prefix))delete state.journal[fecha];});
+  save();
+  showToast('\u{1F4CA} Progreso del mes reiniciado','purple');
+  setTimeout(()=>location.reload(),800);
+}
+
+function showToast(msg,type='cyan'){const t=document.createElement('div');t.className=`toast ${type}`;t.textContent=msg;document.getElementById('toasts').appendChild(t);setTimeout(()=>t.remove(),3100);}
+
+load();renderDashboard();updateXPDisplay();checkPenalty();
+
+// ── Inicialización limpia: sin historial fantasma ──────────────────────────
+if(!state.habits.length){
+  const samples=[
+    {id:'s1',name:'Leer 30 minutos',   cat:'Estudio',   priority:'Alta', type:'positive',emoji:'📖',color:'#00f5d4'},
+    {id:'s2',name:'Ejercicio matutino', cat:'Fitness',   priority:'Alta', type:'positive',emoji:'💪',color:'#9d4edd'},
+    {id:'s3',name:'Meditar 10 min',     cat:'Mentalidad',priority:'Media',type:'positive',emoji:'🧘',color:'#f5a623'},
+    {id:'s4',name:'8 vasos de agua',    cat:'Salud',     priority:'Media',type:'positive',emoji:'💧',color:'#3b82f6'},
+    {id:'s5',name:'No procrastinar',    cat:'Mentalidad',priority:'Alta', type:'negative',emoji:'🚫',color:'#ff007f'},
+  ];
+  state.habits = samples;
+  // Sin completions previas — el usuario parte de cero
+  save();
+  renderDashboard();
+  updateXPDisplay();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// MÓDULO CRONÓMETRO
+// ══════════════════════════════════════════════════════════════════
+const timerState = {
+  mode: 'countdown',   // 'countdown' | 'stopwatch'
+  running: false,
+  paused: false,
+  totalSeconds: 1500,  // 25:00 por defecto
+  remaining: 1500,
+  elapsed: 0,
+  interval: null,
+  startTimestamp: null
+};
+
+function openTimer(){
+  document.getElementById('timer-overlay').classList.add('open');
+  timerReset();
+}
+function closeTimer(){
+  document.getElementById('timer-overlay').classList.remove('open');
+  if(timerState.running) timerPause();
+}
+function closeTimerOut(e){
+  if(e.target===document.getElementById('timer-overlay')) closeTimer();
+}
+
+function setTimerMode(mode){
+  timerState.mode = mode;
+  timerReset();
+  document.querySelectorAll('.timer-mode-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(mode==='countdown'?'btn-mode-count':'btn-mode-stop').classList.add('active');
+  document.getElementById('timer-config').style.display = mode==='countdown' ? 'flex' : 'none';
+}
+
+function timerStart(){
+  if(timerState.mode === 'countdown'){
+    const m = parseInt(document.getElementById('timer-min').value)||0;
+    const s = parseInt(document.getElementById('timer-sec').value)||0;
+    timerState.totalSeconds = m*60+s;
+    if(timerState.totalSeconds<=0){showToast('⚠️ Configura un tiempo mayor a 0','pink');return;}
+    if(!timerState.paused) timerState.remaining = timerState.totalSeconds;
+  } else {
+    if(!timerState.paused) timerState.elapsed = 0;
+  }
+  timerState.running = true;
+  timerState.paused = false;
+  document.getElementById('timer-reminder').style.display = 'none';
+  document.getElementById('timer-start-btn').style.display = 'none';
+  document.getElementById('timer-pause-btn').style.display = 'flex';
+  document.getElementById('timer-status').textContent = 'En progreso...';
+  document.getElementById('timer-time').classList.add('timer-running');
+
+  timerState.interval = setInterval(()=>{
+    if(timerState.mode==='countdown'){
+      timerState.remaining--;
+      if(timerState.remaining<=0){
+        timerState.remaining=0;
+        timerFinished();
+        return;
+      }
+      const pct = (1 - timerState.remaining/timerState.totalSeconds)*100;
+      document.getElementById('timer-progress').style.width = pct+'%';
+      if(timerState.remaining <= 30) {
+        document.getElementById('timer-time').classList.remove('timer-running');
+        document.getElementById('timer-time').classList.add('timer-urgent');
+      }
+    } else {
+      timerState.elapsed++;
+    }
+    renderTimerDisplay();
+  }, 1000);
+}
+
+function timerPause(){
+  clearInterval(timerState.interval);
+  timerState.running = false;
+  timerState.paused = true;
+  document.getElementById('timer-start-btn').textContent = '▶ Continuar';
+  document.getElementById('timer-start-btn').style.display = 'flex';
+  document.getElementById('timer-pause-btn').style.display = 'none';
+  document.getElementById('timer-time').classList.remove('timer-running','timer-urgent');
+  document.getElementById('timer-status').textContent = 'Pausado';
+}
+
+function timerReset(){
+  clearInterval(timerState.interval);
+  timerState.running = false;
+  timerState.paused = false;
+  timerState.elapsed = 0;
+  const m = parseInt(document.getElementById('timer-min')?document.getElementById('timer-min').value:25)||25;
+  const s = parseInt(document.getElementById('timer-sec')?document.getElementById('timer-sec').value:0)||0;
+  timerState.totalSeconds = m*60+s;
+  timerState.remaining = timerState.totalSeconds;
+  document.getElementById('timer-progress').style.width = '0%';
+  document.getElementById('timer-start-btn').textContent = '▶ Iniciar';
+  document.getElementById('timer-start-btn').style.display = 'flex';
+  document.getElementById('timer-pause-btn').style.display = 'none';
+  document.getElementById('timer-reminder').style.display = 'none';
+  document.getElementById('timer-time').classList.remove('timer-running','timer-urgent');
+  document.getElementById('timer-status').textContent = 'Listo para comenzar';
+  renderTimerDisplay();
+}
+
+function timerFinished(){
+  clearInterval(timerState.interval);
+  timerState.running = false;
+  document.getElementById('timer-time').classList.remove('timer-running');
+  document.getElementById('timer-time').classList.add('timer-urgent');
+  document.getElementById('timer-progress').style.width = '100%';
+  document.getElementById('timer-start-btn').style.display = 'none';
+  document.getElementById('timer-pause-btn').style.display = 'none';
+  document.getElementById('timer-reminder').style.display = 'block';
+  document.getElementById('timer-status').textContent = '¡Tiempo completado!';
+  showToast('✅ ¡Sesión finalizada! Marca tu hábito como cumplido.','cyan');
+  // Vibración en móvil si disponible
+  if(navigator.vibrate) navigator.vibrate([200,100,200]);
+}
+
+function renderTimerDisplay(){
+  let secs = timerState.mode==='countdown' ? timerState.remaining : timerState.elapsed;
+  const h = Math.floor(secs/3600);
+  const m = Math.floor((secs%3600)/60);
+  const s = secs%60;
+  const display = h>0
+    ? String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')
+    : String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  document.getElementById('timer-time').textContent = display;
+}
+// ══════════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════════
+// SISTEMA DE IMPORTACIÓN OFFLINE
+// ══════════════════════════════════════════════════════════════════
+
+/** Importa un JSON exportado y fusiona con el estado actual */
+function importJSON(event){
+  const file = event.target.files[0];
+  if(!file){ return; }
+  if(!file.name.endsWith('.json')){
+    showImportStatus('❌ Solo se aceptan archivos .json exportados por HabitOS','error');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      const imported = JSON.parse(e.target.result);
+      // Validar estructura mínima
+      if(!imported.habits && !imported.completions){
+        showImportStatus('❌ El archivo no parece ser un backup de HabitOS válido','error');
+        return;
+      }
+      let mergeStats = {habits:0, days:0, journal:0};
+
+      // ── Fusionar hábitos: añadir los que no existen (por nombre) ──
+      if(Array.isArray(imported.habits)){
+        imported.habits.forEach(ih => {
+          const exists = state.habits.some(h => h.name === ih.name);
+          if(!exists){ state.habits.push(ih); mergeStats.habits++; }
+        });
+      }
+
+      // ── Fusionar completions: agregar días que no existen localmente ──
+      if(imported.completions && typeof imported.completions === 'object'){
+        Object.keys(imported.completions).forEach(date => {
+          if(!state.completions[date]){
+            state.completions[date] = imported.completions[date];
+            mergeStats.days++;
+          } else {
+            // Si el día existe, fusionar hábito por hábito (no sobreescribir)
+            Object.keys(imported.completions[date]).forEach(hid => {
+              if(state.completions[date][hid] === undefined){
+                state.completions[date][hid] = imported.completions[date][hid];
+              }
+            });
+          }
+        });
+      }
+
+      // ── Fusionar journal ──
+      if(imported.journal && typeof imported.journal === 'object'){
+        Object.keys(imported.journal).forEach(date => {
+          if(!state.journal[date]){
+            state.journal[date] = imported.journal[date];
+            mergeStats.journal++;
+          }
+        });
+      }
+
+      // ── XP: tomar el mayor ──
+      if(typeof imported.xp === 'number' && imported.xp > state.xp){
+        state.xp = imported.xp;
+      }
+
+      save();
+      updateXPDisplay();
+      renderDashboard();
+
+      const msg = `✅ Importación exitosa — ${mergeStats.habits} hábitos nuevos, ${mergeStats.days} días fusionados, ${mergeStats.journal} entradas de journal`;
+      showImportStatus(msg, 'success');
+      showToast('📥 Progreso offline importado correctamente','cyan');
+
+    } catch(err){
+      showImportStatus('❌ Error al leer el archivo: ' + err.message,'error');
+    }
+    // Reset input para permitir reimportar el mismo archivo
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function showImportStatus(msg, type){
+  const el = document.getElementById('import-status');
+  if(!el) return;
+  el.style.display = 'block';
+  el.style.background = type === 'success'
+    ? 'rgba(0,245,212,0.1)' : 'rgba(255,0,127,0.1)';
+  el.style.border = type === 'success'
+    ? '1px solid rgba(0,245,212,0.3)' : '1px solid rgba(255,0,127,0.3)';
+  el.style.color = type === 'success' ? 'var(--cyan)' : 'var(--pink)';
+  el.textContent = msg;
+  // Drag-drop zone feedback
+  const zone = document.getElementById('import-drop-zone');
+  if(zone){
+    zone.style.borderColor = type === 'success' ? 'rgba(0,245,212,0.5)' : 'rgba(255,0,127,0.5)';
+    setTimeout(()=>{ zone.style.borderColor=''; }, 3000);
+  }
+}
+
+// Drag & Drop support for import zone
+document.addEventListener('DOMContentLoaded', () => {
+  const zone = document.getElementById('import-drop-zone');
+  if(!zone) return;
+  zone.addEventListener('dragover', e=>{ e.preventDefault(); zone.style.borderColor='var(--cyan)'; zone.style.background='rgba(0,245,212,0.06)'; });
+  zone.addEventListener('dragleave', ()=>{ zone.style.borderColor=''; zone.style.background=''; });
+  zone.addEventListener('drop', e=>{
+    e.preventDefault();
+    zone.style.borderColor=''; zone.style.background='';
+    const file = e.dataTransfer.files[0];
+    if(file){ const fakeEvent={target:{files:[file],value:''}};importJSON(fakeEvent); }
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════
+// EXPORTAR EXCEL (.xlsx) — sin librerías externas, genera XML SpreadsheetML
+// ══════════════════════════════════════════════════════════════════
+function exportXLSX(){
+  const habits = state.habits;
+  const allDays = Object.keys(state.completions).sort();
+
+  // Hoja 1: Resumen de hábitos
+  let rows1 = [['Hábito','Categoría','Prioridad','Tipo','Color','Racha Actual','Mejor Racha','% Cumplimiento']];
+  habits.forEach(h => {
+    let done=0, total=0;
+    allDays.forEach(d => { const c=state.completions[d]||{}; if(c[h.id]!==undefined){total++; if(c[h.id])done++;} });
+    const pct = total ? Math.round(done/total*100) : 0;
+    rows1.push([h.name, h.cat, h.priority, h.type==='positive'?'Positivo':'Negativo', h.color, getStreak(h.id), getBestStreak(h.id), pct+'%']);
+  });
+
+  // Hoja 2: Historial de completions
+  let rows2 = [['Fecha', ...habits.map(h=>h.name)]];
+  allDays.forEach(date => {
+    const comp = state.completions[date]||{};
+    rows2.push([date, ...habits.map(h => comp[h.id] ? '✓' : '')]);
+  });
+
+  // Hoja 3: Journal
+  let rows3 = [['Fecha','Estado de Ánimo','Energía','Notas']];
+  Object.keys(state.journal).sort().forEach(date => {
+    const e = state.journal[date]||{};
+    rows3.push([date, e.mood||'', e.energy||'', (e.notes||'').replace(/"/g,"'")]);
+  });
+
+  // Generar XML SpreadsheetML (compatible con Excel, LibreOffice, Google Sheets)
+  const toXML = (rows, sheetName) => {
+    const xmlRows = rows.map(row =>
+      '<Row>' + row.map(cell =>
+        `<Cell><Data ss:Type="String">${String(cell).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</Data></Cell>`
+      ).join('') + '</Row>'
+    ).join('');
+    return `<Worksheet ss:Name="${sheetName}"><Table>${xmlRows}</Table></Worksheet>`;
+  };
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+${toXML(rows1,'Resumen Hábitos')}
+${toXML(rows2,'Historial')}
+${toXML(rows3,'Journal')}
+</Workbook>`;
+
+  const blob = new Blob([xml], {type:'application/vnd.ms-excel;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'HabitOS_' + new Date().toISOString().split('T')[0] + '.xls';
+  a.click();
+  showToast('📗 Excel exportado (3 hojas)','cyan');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// FORMULARIO OFFLINE — descarga un HTML autónomo para registrar
+// progreso sin conexión a internet
+// ══════════════════════════════════════════════════════════════════
+function downloadOfflineForm(){
+  const habits = state.habits;
+  const today = todayKey();
+
+  // Construir las filas de hábitos para el formulario
+  const habitRows = habits.map((h,i) => `
+    <div class="habit-row" id="hr${i}">
+      <div class="habit-label">
+        <span class="emoji">${h.emoji}</span>
+        <div>
+          <div class="hname">${h.name}</div>
+          <div class="hcat">${h.cat} · ${h.priority}</div>
+        </div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" name="habit_${h.id}" id="hc${i}" onchange="markDone(${i},this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>`).join('');
+
+  const habitIds = JSON.stringify(habits.map(h=>({id:h.id,name:h.name,emoji:h.emoji})));
+
+  const formHTML = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HabitOS — Registro Offline</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:#0d0f12;color:#f0f2f5;min-height:100vh;padding:20px}
+.card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:20px;max-width:500px;margin:0 auto}
+h1{font-size:20px;font-weight:700;margin-bottom:4px;background:linear-gradient(135deg,#00f5d4,#9d4edd);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.sub{font-size:12px;color:#4a5060;margin-bottom:20px}
+label.lbl{display:block;font-size:11px;color:#4a5060;text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:6px;margin-top:14px}
+input[type=date],input[type=number],select,textarea{width:100%;background:#22252c;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 14px;font-size:14px;font-family:inherit;color:#f0f2f5;outline:none}
+textarea{resize:vertical;min-height:80px}
+.habit-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#22252c;border-radius:10px;margin-bottom:8px;border:1px solid rgba(255,255,255,0.06);transition:border-color .2s}
+.habit-row.done{border-color:rgba(0,245,212,.4);background:rgba(0,245,212,.05)}
+.habit-label{display:flex;align-items:center;gap:10px}
+.emoji{font-size:22px}
+.hname{font-size:14px;font-weight:600}
+.hcat{font-size:11px;color:#8b92a5;margin-top:2px}
+/* Toggle switch */
+.toggle{position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;inset:0;background:#22252c;border:2px solid rgba(255,255,255,0.15);border-radius:26px;transition:.3s}
+.slider::before{content:'';position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:#8b92a5;border-radius:50%;transition:.3s}
+input:checked + .slider{background:rgba(0,245,212,.2);border-color:#00f5d4}
+input:checked + .slider::before{transform:translateX(22px);background:#00f5d4;box-shadow:0 0 8px rgba(0,245,212,.6)}
+.mood-row{display:flex;gap:8px;margin-bottom:4px}
+.mood-btn{flex:1;padding:10px 4px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:#22252c;cursor:pointer;font-size:20px;text-align:center;transition:all .2s}
+.mood-btn.sel{background:rgba(157,78,221,.15);border-color:rgba(157,78,221,.4)}
+.energy-wrap{display:flex;gap:5px;margin-bottom:4px}
+.edot{width:22px;height:10px;border-radius:3px;background:#22252c;cursor:pointer;border:1px solid transparent;transition:all .2s}
+.edot.lit{background:#f5a623;box-shadow:0 0 6px rgba(245,166,35,.5)}
+.btn{display:block;width:100%;padding:14px;border-radius:12px;border:1px solid rgba(0,245,212,.3);background:rgba(0,245,212,.1);color:#00f5d4;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:20px;transition:all .2s}
+.btn:hover{background:rgba(0,245,212,.2);box-shadow:0 0 20px rgba(0,245,212,.15)}
+.result{display:none;margin-top:16px;padding:14px 16px;border-radius:10px;font-size:13px;line-height:1.6;word-break:break-all;background:rgba(0,245,212,.06);border:1px solid rgba(0,245,212,.3);color:#00f5d4}
+.copy-btn{display:none;width:100%;padding:12px;border-radius:10px;border:1px solid rgba(157,78,221,.4);background:rgba(157,78,221,.1);color:#9d4edd;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px}
+.divider{height:1px;background:rgba(255,255,255,.06);margin:18px 0}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>⚡ HabitOS</h1>
+  <div class="sub">Formulario de registro offline — Importa este JSON en HabitOS cuando tengas internet</div>
+
+  <label class="lbl">📅 Fecha del registro</label>
+  <input type="date" id="reg-date" value="${today}">
+
+  <div class="divider"></div>
+  <label class="lbl">✅ Hábitos completados</label>
+  <div id="habits-wrap">${habitRows}</div>
+
+  <div class="divider"></div>
+  <label class="lbl">😊 Estado de ánimo</label>
+  <div class="mood-row">
+    <div class="mood-btn" onclick="setMood('😔',this)">😔</div>
+    <div class="mood-btn" onclick="setMood('😐',this)">😐</div>
+    <div class="mood-btn" onclick="setMood('🙂',this)">🙂</div>
+    <div class="mood-btn" onclick="setMood('😊',this)">😊</div>
+    <div class="mood-btn" onclick="setMood('🤩',this)">🤩</div>
+  </div>
+
+  <label class="lbl">⚡ Nivel de energía</label>
+  <div class="energy-wrap" id="energy-wrap"></div>
+
+  <label class="lbl" style="margin-top:14px">📝 Notas del día</label>
+  <textarea id="notes-input" placeholder="¿Cómo estuvo el día? ¿Qué lograste?..."></textarea>
+
+  <button class="btn" onclick="generateJSON()">💾 Generar JSON para importar</button>
+  <div class="result" id="result-box"></div>
+  <button class="copy-btn" id="copy-btn" onclick="copyJSON()">📋 Copiar JSON</button>
+  <button class="copy-btn" id="dl-btn" onclick="downloadJSON()" style="border-color:rgba(0,245,212,.4);background:rgba(0,245,212,.1);color:#00f5d4;margin-top:6px">⬇️ Descargar como .json</button>
+</div>
+
+<scr"+"ipt>
+const HABITS = ${habitIds};
+let selectedMood = '';
+let selectedEnergy = 0;
+let generatedData = null;
+
+// Build energy dots
+const ew = document.getElementById('energy-wrap');
+for(let i=1;i<=10;i++){
+  const d=document.createElement('div');
+  d.className='edot';
+  d.onclick=()=>setEnergy(i);
+  ew.appendChild(d);
+}
+
+function setMood(m,el){
+  selectedMood=m;
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+}
+function setEnergy(n){
+  selectedEnergy=n;
+  document.querySelectorAll('.edot').forEach((d,i)=>d.classList.toggle('lit',i<n));
+}
+function markDone(i,checked){
+  document.getElementById('hr'+i).classList.toggle('done',checked);
+}
+function generateJSON(){
+  const date = document.getElementById('reg-date').value || '${today}';
+  const completions = {};
+  completions[date] = {};
+  HABITS.forEach(h=>{
+    const cb=document.querySelector('input[name="habit_'+h.id+'"]');
+    completions[date][h.id] = cb ? cb.checked : false;
+  });
+  const journal = {};
+  journal[date] = {
+    mood: selectedMood,
+    energy: selectedEnergy,
+    notes: document.getElementById('notes-input').value
+  };
+  generatedData = {
+    habits:[],
+    completions,
+    journal,
+    xp:0,
+    _source:'offline-form',
+    _date: date
+  };
+  const jsonStr = JSON.stringify(generatedData, null, 2);
+  const box = document.getElementById('result-box');
+  box.style.display='block';
+  box.textContent = jsonStr.substring(0,300) + (jsonStr.length>300?'\n...':'');
+  document.getElementById('copy-btn').style.display='block';
+  document.getElementById('dl-btn').style.display='block';
+}
+function copyJSON(){
+  navigator.clipboard.writeText(JSON.stringify(generatedData,null,2))
+    .then(()=>alert('✅ JSON copiado al portapapeles'))
+    .catch(()=>alert('Selecciona el texto manualmente'));
+}
+function downloadJSON(){
+  if(!generatedData) return;
+  const blob = new Blob([JSON.stringify(generatedData,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'habitos_offline_' + (generatedData._date||'dia') + '.json';
+  a.click();
+}
+</scr"+"ipt>
+</body>
+</html>`;
+
+  const blob = new Blob([formHTML], {type:'text/html;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'HabitOS_formulario_offline.html';
+  a.click();
+  showToast('⬇️ Formulario offline descargado','purple');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// IMPORTAR EXCEL / CSV — parseo nativo sin librerías
+// ══════════════════════════════════════════════════════════════════;
+
+</script>
+</body>
+</html>
